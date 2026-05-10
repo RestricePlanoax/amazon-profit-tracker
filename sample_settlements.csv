@@ -1,0 +1,3 @@
+settlement_date,settlement_id,total_amount,fees,taxes,reimbursements
+2026-04-07,SETTLE-001,125000,18500,3200,1200
+2026-04-14,SETTLE-002,118500,17200,3050,0

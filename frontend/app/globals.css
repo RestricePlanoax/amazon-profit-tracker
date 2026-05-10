@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5efe3;
+  --foreground: #16211d;
+  --card: rgba(255, 252, 247, 0.82);
+  --card-foreground: #16211d;
+  --muted: #e9decb;
+  --muted-foreground: #5d675d;
+  --primary: #0f766e;
+  --primary-foreground: #effcf8;
+  --secondary: #f97316;
+  --secondary-foreground: #fff7ed;
+  --accent: #eff6f4;
+  --accent-foreground: #16302b;
+  --border: rgba(22, 33, 29, 0.08);
+  --danger: #b91c1c;
+  --danger-foreground: #fff5f5;
+  --ring: rgba(15, 118, 110, 0.18);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --font-sans: var(--font-manrope);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background:
+      radial-gradient(circle at top left, rgba(249, 115, 22, 0.16), transparent 38%),
+      radial-gradient(circle at top right, rgba(15, 118, 110, 0.15), transparent 42%),
+      linear-gradient(180deg, #f9f4eb 0%, #f5efe3 45%, #eef7f3 100%);
+  }
+
+  body {
+    min-height: 100vh;
+    background: transparent;
+    color: var(--foreground);
+    font-family: var(--font-manrope), sans-serif;
+  }
+}
+
+.font-display {
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+.glass-panel {
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(22, 33, 29, 0.1);
+}
+
+.data-grid {
+  background-image:
+    linear-gradient(to right, rgba(22, 33, 29, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 33, 29, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
