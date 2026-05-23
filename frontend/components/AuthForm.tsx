@@ -55,9 +55,9 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
       <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_0.9fr]">
-        <section className="glass-panel rounded-[2.5rem] border border-border/70 bg-card/85 p-8 lg:p-10">
+        <section className="polaris-card p-8 lg:p-10">
           <div className="max-w-xl">
-            <p className="font-display text-sm uppercase tracking-[0.3em] text-primary">
+            <p className="text-sm font-semibold text-primary">
               Amazon Seller Profit Tracker
             </p>
             <h1 className="mt-4 font-display text-5xl font-semibold leading-tight">
@@ -78,16 +78,16 @@ export function AuthForm({ mode }: AuthFormProps) {
               "CSV upload with background processing",
               "Dashboard plus SKU profitability",
             ].map((item) => (
-              <div key={item} className="rounded-3xl border border-border bg-white/75 p-4 text-sm">
+              <div key={item} className="rounded-lg border border-border bg-card p-4 text-sm">
                 {item}
               </div>
             ))}
           </div>
         </section>
 
-        <section className="glass-panel rounded-[2.5rem] border border-border/70 bg-white/82 p-8 lg:p-10">
+        <section className="polaris-card p-8 lg:p-10">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
               {isSignup ? "Create account" : "Login"}
             </p>
             <h2 className="mt-3 font-display text-3xl font-semibold">
@@ -126,7 +126,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
 
             {error ? (
-              <div className="rounded-2xl border border-danger/20 bg-danger/8 px-4 py-3 text-sm text-danger">
+              <div className="rounded-lg border border-danger/20 bg-danger/8 px-4 py-3 text-sm text-danger">
                 {error}
               </div>
             ) : null}

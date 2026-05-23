@@ -1,6 +1,7 @@
 from app.models.ad import Ad
 from app.models.daily_metric import DailyMetric
 from app.models.integration import Integration
+from app.models.import_batch import ImportBatch
 from app.models.inventory import Inventory
 from app.models.order import Order
 from app.models.product import Product
@@ -14,6 +15,7 @@ __all__ = [
     "Ad",
     "DailyMetric",
     "Integration",
+    "ImportBatch",
     "Inventory",
     "Order",
     "Product",

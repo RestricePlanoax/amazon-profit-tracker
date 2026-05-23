@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { MetricCard } from "@/components/MetricCard";
 import { ProfitChart } from "@/components/ProfitChart";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type {
@@ -14,6 +15,7 @@ import type {
   DashboardInsightsResponse,
   DashboardSummary,
   DateBounds,
+  MetricCatalogItem,
   TrendPoint,
   UserProfile,
 } from "@/lib/types";
@@ -85,9 +87,11 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<DashboardInsightsResponse | null>(null);
   const [bounds, setBounds] = useState<DateBounds | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [metricCatalog, setMetricCatalog] = useState<MetricCatalogItem[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingDemo, setLoadingDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadBounds = useEffectEvent(async () => {
@@ -96,8 +100,13 @@ export default function DashboardPage() {
     }
 
     try {
-      const [profileData, boundsData] = await Promise.all([api.getMe(), api.getDateBounds()]);
+      const [profileData, boundsData, metricCatalogData] = await Promise.all([
+        api.getMe(),
+        api.getDateBounds(),
+        api.getMetricCatalog(),
+      ]);
       setProfile(profileData);
+      setMetricCatalog(metricCatalogData);
       setBounds(boundsData);
       setStartDate(boundsData.default_start_date);
       setEndDate(boundsData.default_end_date);
@@ -142,11 +151,45 @@ export default function DashboardPage() {
   }, [startDate, endDate]);
 
   const hasData = Boolean(summary && summary.metrics.orders_count.current > 0);
+  const configuredHeadlineMetrics = metricCatalog
+    .filter((item) => item.dashboard_slot === "headline" && item.visible_by_default)
+    .slice(0, 6);
+  const configuredSupportingMetrics = metricCatalog
+    .filter((item) => item.dashboard_slot === "supporting" && item.visible_by_default)
+    .slice(0, 6);
+  const renderedHeadlineMetrics =
+    configuredHeadlineMetrics.length > 0 ? configuredHeadlineMetrics : headlineMetrics;
+  const renderedSupportingMetrics =
+    configuredSupportingMetrics.length > 0 ? configuredSupportingMetrics : supportingMetrics;
+
+  const handleLoadDemoStore = async () => {
+    setLoadingDemo(true);
+    setError(null);
+    try {
+      await api.loadDemoStore();
+      const boundsData = await api.getDateBounds();
+      setBounds(boundsData);
+      setStartDate(boundsData.default_start_date);
+      setEndDate(boundsData.default_end_date);
+      setLoading(true);
+    } catch (demoError) {
+      setError(demoError instanceof Error ? demoError.message : "Failed to load demo store.");
+    } finally {
+      setLoadingDemo(false);
+    }
+  };
+  const getMetricType = (
+    item:
+      | MetricCatalogItem
+      | {
+          type: "currency" | "percent" | "number" | "ratio";
+        },
+  ) => ("format" in item ? item.format : item.type);
 
   return (
     <AppShell title="Dashboard">
       <div className="space-y-6">
-        <div className="grid gap-4 rounded-[2rem] border border-border/70 bg-card/85 p-6 glass-panel xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="polaris-card grid gap-4 p-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="font-display text-3xl font-semibold">
               {profile?.store.name ?? "Your store"}
@@ -169,6 +212,11 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : null}
+            <div className="mt-5">
+              <Button variant="outline" onClick={() => void handleLoadDemoStore()} disabled={loadingDemo}>
+                {loadingDemo ? "Loading demo..." : "Load demo store"}
+              </Button>
+            </div>
           </div>
 
           {bounds ? (
@@ -184,7 +232,7 @@ export default function DashboardPage() {
               }}
             />
           ) : (
-            <div className="h-40 animate-pulse rounded-[1.5rem] border border-border bg-white/70" />
+            <div className="h-40 animate-pulse rounded-lg border border-border bg-card" />
           )}
         </div>
 
@@ -194,28 +242,35 @@ export default function DashboardPage() {
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-48 animate-pulse rounded-3xl border border-border bg-card/70"
+                  className="h-48 animate-pulse rounded-lg border border-border bg-card"
                 />
               ))}
             </div>
-            <div className="h-96 animate-pulse rounded-[2rem] border border-border bg-card/75" />
+            <div className="h-96 animate-pulse rounded-lg border border-border bg-card" />
           </>
         ) : error ? (
           <EmptyState title="Dashboard unavailable" description={error} />
         ) : !summary || !hasData ? (
-          <EmptyState
-            title="Upload your first reports"
-            description="Once you upload order and ads CSV files, this dashboard will unlock date-based analysis, growth comparisons, and seller insights."
-          />
+          <div className="space-y-4">
+            <EmptyState
+              title="Upload your first reports"
+              description="Once you upload order and ads CSV files, this dashboard will unlock date-based analysis, growth comparisons, and seller insights."
+            />
+            <div className="flex justify-center">
+              <Button onClick={() => void handleLoadDemoStore()} disabled={loadingDemo}>
+                {loadingDemo ? "Loading demo..." : "Load demo store instead"}
+              </Button>
+            </div>
+          </div>
         ) : (
           <>
             <section className="grid gap-4 md:grid-cols-2">
               {summary.data_sources.map((source) => (
                 <div
                   key={source.name}
-                  className="glass-panel rounded-[1.5rem] border border-border/70 bg-card/85 p-5"
+                  className="polaris-card p-5"
                 >
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     {source.name}
                   </p>
                   <div className="mt-3 flex items-center justify-between gap-3">
@@ -223,7 +278,7 @@ export default function DashboardPage() {
                       {source.active ? "Active" : "Inactive"}
                     </p>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`polaris-badge ${
                         source.active
                           ? "bg-emerald-100 text-emerald-800"
                           : "bg-slate-100 text-slate-700"
@@ -242,21 +297,23 @@ export default function DashboardPage() {
             </section>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {headlineMetrics.map((item) => (
+              {renderedHeadlineMetrics.map((item) => (
                 <MetricCard
                   key={item.key}
                   label={item.label}
                   metric={summary.metrics[item.key]}
-                  type={item.type}
+                  type={getMetricType(item)}
                   description={item.description}
-                  lowerIsBetter={item.lowerIsBetter}
+                  lowerIsBetter={
+                    "polarity" in item ? item.polarity === "lower_is_better" : item.lowerIsBetter
+                  }
                 />
               ))}
             </div>
 
-            <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+            <section className="polaris-card p-6">
               <div className="mb-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Supporting metrics
                 </p>
                 <h2 className="font-display text-2xl font-semibold">
@@ -264,20 +321,20 @@ export default function DashboardPage() {
                 </h2>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {supportingMetrics.map((metric) => (
+                {renderedSupportingMetrics.map((metric) => (
                   <div
                     key={metric.key}
-                    className="rounded-[1.5rem] border border-border/70 bg-white/75 p-5"
+                    className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5"
                   >
-                    <p className="text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">
                       {metric.label}
                     </p>
                     <p className="mt-3 font-display text-3xl font-semibold">
-                      {metric.type === "ratio"
+                      {getMetricType(metric) === "ratio"
                         ? `${summary.metrics[metric.key].current.toFixed(2)}x`
-                        : metric.type === "percent"
+                        : getMetricType(metric) === "percent"
                           ? `${summary.metrics[metric.key].current.toFixed(2)}%`
-                          : metric.type === "currency"
+                          : getMetricType(metric) === "currency"
                             ? new Intl.NumberFormat("en-IN", {
                                 style: "currency",
                                 currency: "INR",

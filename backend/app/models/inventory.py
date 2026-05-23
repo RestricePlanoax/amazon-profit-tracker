@@ -14,6 +14,7 @@ class Inventory(Base):
     __tablename__ = "inventory"
     __table_args__ = (
         UniqueConstraint("store_id", "sku", "snapshot_date", name="uq_inventory_store_sku_snapshot"),
+        UniqueConstraint("store_id", "source_row_hash", name="uq_inventory_store_source_row_hash"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -25,6 +26,13 @@ class Inventory(Base):
         nullable=False,
         index=True,
     )
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("import_batches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    source_row_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     sku: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     snapshot_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     available_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

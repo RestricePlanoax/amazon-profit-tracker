@@ -120,6 +120,7 @@ export type DashboardInsightsResponse = {
 
 export type UploadItem = {
   id: string;
+  import_batch_id: string | null;
   upload_type: string;
   import_type: string;
   status: string;
@@ -128,6 +129,38 @@ export type UploadItem = {
   rows_skipped: number;
   can_reprocess: boolean;
   uploaded_at: string;
+};
+
+export type DemoLoadResponse = {
+  store_id: string;
+  import_batch_id: string;
+  rows_inserted: number;
+  message: string;
+};
+
+export type BulkCogsResult = {
+  rows_processed: number;
+  products_created: number;
+  products_updated: number;
+  rows_skipped: number;
+  errors: string[];
+};
+
+export type MetricCatalogItem = {
+  key: keyof DashboardMetricSet;
+  label: string;
+  category: string;
+  format: "currency" | "percent" | "number" | "ratio";
+  polarity: "higher_is_better" | "lower_is_better";
+  description: string;
+  formula_label: string;
+  business_question: string;
+  warning_threshold: number | null;
+  critical_threshold: number | null;
+  visible_by_default: boolean;
+  dashboard_slot: "headline" | "supporting";
+  onboarding_required: boolean;
+  sort_order: number;
 };
 
 export type Integration = {

@@ -6,10 +6,15 @@ The app lets a seller:
 
 - sign up with email and password
 - upload Amazon orders and ads CSV files
+- upload settlement reports and bulk COGS CSV files
+- prevent duplicate imports with file hashes and row-level dedupe
+- delete or reprocess an import batch safely
+- load a demo store when a prospect wants to see value immediately
 - process uploads in the background
 - view calendar-based revenue, net profit, margin, TACOS, ACOS, and refund rate
 - compare the selected period against the previous equivalent period
 - switch between financial and efficiency line charts
+- render dashboard/onboarding metrics from a backend metric catalog
 - review rule-based seller insights with an LLM-ready recommendation scaffold
 - review SKU-level profitability and update COGS per SKU
 
@@ -31,6 +36,9 @@ amazon-profit-tracker/
   docker-compose.yml
   sample_orders.csv
   sample_ads.csv
+  sample_settlements.csv
+  sample_inventory.csv
+  sample_cogs.csv
   README.md
 ```
 
@@ -95,6 +103,8 @@ Root-level sample files are included so you can sign up and test the MVP quickly
 
 - [sample_orders.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_orders.csv)
 - [sample_ads.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_ads.csv)
+- [sample_settlements.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_settlements.csv)
+- [sample_cogs.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_cogs.csv)
 
 These demo files now cover a longer date range from `2024-01-01` onward so the dashboard can show meaningful calendar-based trends and period-over-period change.
 
@@ -116,14 +126,33 @@ date,sku,spend,sales,clicks,impressions
 2026-04-02,SKU-001,150,1000,10,500
 ```
 
+### Settlement CSV
+
+```csv
+settlement_date,settlement_id,total_amount,fees,taxes,reimbursements
+2026-04-01,SET001,12000,1400,240,100
+2026-04-15,SET002,18500,2200,370,0
+```
+
+### Bulk COGS CSV
+
+```csv
+sku,name,cogs
+SKU-001,Demo Bottle,420
+SKU-002,Demo Organizer,310
+```
+
 ## MVP Notes
 
 - Signup automatically creates one default store for the user.
 - Uploads are saved to `backend/storage/uploads`.
-- CSV parsing is tolerant of header case and spaces. Headers are trimmed, lowercased, and spaces are converted to underscores.
+- CSV parsing is tolerant of header case, spaces, common Amazon-style names, and common delimiters.
 - Upload failures store the validation reason on the upload record.
 - Daily metrics are recomputed after each successful upload or COGS update.
-- The current MVP is additive. Re-uploading the same report will insert duplicate data unless you clear it manually.
+- Upload file hashes prevent the exact same file from being imported twice.
+- Import batches track inserted/skipped row counts and support delete/reprocess actions.
+- Row hashes make ingestion idempotent for orders, ads, settlements, and demo rows.
+- Demo mode seeds a realistic 180-day store so the dashboard is useful before a seller has exports ready.
 
 ## Profit Formula
 
@@ -135,7 +164,7 @@ fees = sum(order fees)
 refund = sum(order refund)
 ad_spend = sum(ad spend)
 cogs = product.cogs * units_sold
-net_profit = revenue - fees - refund - ad_spend - cogs
+net_profit = revenue - fees - taxes - refund - ad_spend - cogs + reimbursements
 profit_margin = net_profit / revenue * 100
 ```
 
@@ -151,17 +180,28 @@ profit_margin = net_profit / revenue * 100
 
 - `POST /uploads/orders`
 - `POST /uploads/ads`
+- `POST /uploads/settlement`
 - `GET /uploads`
+- `DELETE /uploads/{upload_id}`
+- `POST /uploads/{upload_id}/reprocess`
 
 ### Dashboard
 
-- `GET /dashboard/summary?range=30d`
-- `GET /dashboard/trends?range=30d`
+- `GET /dashboard/date-bounds`
+- `GET /dashboard/summary?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /dashboard/trends?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /dashboard/insights?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+
+### Demo And Metrics
+
+- `POST /demo/load`
+- `GET /metrics/catalog`
 
 ### Products
 
-- `GET /products/profitability?range=30d`
+- `GET /products/profitability?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
 - `PUT /products/{sku}/cogs`
+- `POST /products/cogs/bulk`
 
 ## Seed / Sample Flow
 
@@ -170,7 +210,11 @@ profit_margin = net_profit / revenue * 100
 3. Open the Uploads page.
 4. Upload [sample_orders.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_orders.csv).
 5. Upload [sample_ads.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_ads.csv).
-6. Open Dashboard and Products to verify daily and SKU-level profit metrics.
+6. Optionally upload [sample_settlements.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_settlements.csv).
+7. Optionally upload [sample_cogs.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_cogs.csv) from the Products page.
+8. Open Dashboard and Products to verify daily and SKU-level profit metrics.
+
+For a faster prospect demo, create an account and click **Load demo store** on the dashboard.
 
 If you want to regenerate the demo CSVs:
 
@@ -182,10 +226,9 @@ python scripts/generate_demo_csvs.py
 
 ## Next Roadmap
 
-- Add Amazon SP-API seller authorization
-- Pull reports from the Amazon Reports API instead of manual-only CSV uploads
-- Support settlement report ingestion
-- Add duplicate detection and idempotent imports
+- Add real Amazon SP-API OAuth and seller authorization
+- Pull reports from the Amazon Reports API into the same import batch pipeline
+- Add inventory CSV processing and stockout/sell-through analytics
 - Add multi-store support per user
 - Add scheduled report sync jobs and audit logs
 

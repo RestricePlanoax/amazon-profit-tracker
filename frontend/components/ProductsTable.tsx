@@ -53,10 +53,10 @@ export function ProductsTable({ products, onRefresh }: ProductsTableProps) {
   };
 
   return (
-    <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+    <section className="polaris-card p-4">
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-semibold">Profitability by SKU</h2>
+          <h2 className="text-lg font-semibold">Profitability by SKU</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Rows with negative profit margin are highlighted so loss-making products stand out.
           </p>
@@ -83,14 +83,14 @@ export function ProductsTable({ products, onRefresh }: ProductsTableProps) {
       </div>
 
       {error ? (
-        <div className="mb-4 rounded-2xl border border-danger/20 bg-danger/8 px-4 py-3 text-sm text-danger">
+        <div className="mb-4 rounded-lg border border-danger/20 bg-danger/8 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-[1.75rem] border border-border/80 bg-white/75">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-accent/70 text-muted-foreground">
+          <thead className="bg-muted text-muted-foreground">
             <tr>
               {[
                 "SKU",
@@ -140,7 +140,7 @@ export function ProductsTable({ products, onRefresh }: ProductsTableProps) {
                     {formatMetricValue(product.profit_margin, "percent")}
                   </td>
                   <td className="px-4 py-4">
-                    <div className="flex min-w-[180px] items-center gap-2">
+                    <div className="flex min-w-[170px] items-center gap-2">
                       <Input
                         type="number"
                         min="0"

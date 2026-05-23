@@ -167,7 +167,7 @@ export default function SettingsPage() {
   return (
     <AppShell title="Settings">
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+        <section className="polaris-card p-6">
           <h1 className="font-display text-3xl font-semibold">Store settings</h1>
           <p className="mt-2 text-sm leading-7 text-muted-foreground">
             The MVP creates one default store during signup and uses it for uploads,
@@ -175,26 +175,26 @@ export default function SettingsPage() {
           </p>
 
           {loading ? (
-            <div className="mt-6 h-40 animate-pulse rounded-3xl border border-border bg-white/70" />
+            <div className="mt-6 h-40 animate-pulse rounded-lg border border-border bg-card" />
           ) : error ? (
             <div className="mt-6">
               <EmptyState title="Settings unavailable" description={error} />
             </div>
           ) : profile ? (
             <div className="mt-6 space-y-4">
-              <div className="rounded-3xl border border-border bg-white/75 p-5">
+              <div className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
                 <p className="text-sm text-muted-foreground">Store name</p>
                 <p className="mt-2 font-display text-2xl font-semibold">{profile.store.name}</p>
               </div>
-              <div className="rounded-3xl border border-border bg-white/75 p-5">
+              <div className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
                 <p className="text-sm text-muted-foreground">Marketplace</p>
                 <p className="mt-2 text-lg font-semibold">{profile.store.marketplace}</p>
               </div>
-              <div className="rounded-3xl border border-border bg-white/75 p-5">
+              <div className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
                 <p className="text-sm text-muted-foreground">Account email</p>
                 <p className="mt-2 text-lg font-semibold">{profile.email}</p>
               </div>
-              <div className="rounded-3xl border border-border bg-white/75 p-5">
+              <div className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="h-5 w-5 text-primary" />
                   <div>
@@ -214,7 +214,7 @@ export default function SettingsPage() {
           ) : null}
         </section>
 
-        <aside className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+        <aside className="polaris-card p-6">
           <h2 className="font-display text-2xl font-semibold">Amazon connection</h2>
           <p className="mt-2 text-sm leading-7 text-muted-foreground">
             Manage the beta Amazon account connection here. Sync writes into the same
@@ -227,7 +227,7 @@ export default function SettingsPage() {
           <select
             value={marketplace}
             onChange={(event) => setMarketplace(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm font-medium text-foreground outline-none focus:border-primary"
+            className="mt-2 w-full rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground outline-none focus:border-secondary"
           >
             {marketplaces.map((item) => (
               <option key={item.value} value={item.value}>
@@ -236,10 +236,10 @@ export default function SettingsPage() {
             ))}
           </select>
 
-          <div className="mt-6 rounded-[1.75rem] border border-border bg-white/75 p-5">
+          <div className="mt-6 rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Connection health
                 </p>
                 <p className="mt-2 font-display text-2xl font-semibold">
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                 <p className="mt-4 text-sm text-muted-foreground">
                   Latest job: {latestJob.status} · {latestJob.rows_processed} rows processed
                 </p>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-accent">
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary transition-all duration-500"
                     style={{ width: `${progress}%` }}
@@ -319,8 +319,8 @@ export default function SettingsPage() {
             </Button>
           </div>
 
-          <div className="mt-6 rounded-[1.75rem] bg-foreground p-5 text-white">
-            <p className="text-sm uppercase tracking-[0.2em] text-white/60">Roadmap TODO</p>
+          <div className="mt-6 rounded-lg bg-foreground p-5 text-white">
+            <p className="text-xs font-semibold uppercase text-white/60">Roadmap TODO</p>
             <ul className="mt-4 space-y-3 text-sm text-white/85">
               <li>Replace beta connect with Amazon OAuth / SP-API authorization.</li>
               <li>Pull real report documents and incremental sync windows.</li>

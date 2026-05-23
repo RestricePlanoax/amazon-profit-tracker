@@ -22,16 +22,16 @@ export function MetricCard({
   const isPositive = lowerIsBetter ? !positiveDirection : positiveDirection;
 
   return (
-    <article className="glass-panel rounded-[1.75rem] border border-border/70 bg-card/85 p-5">
-      <p className="text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+    <article className="polaris-card p-5">
+      <p className="text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-5 font-display text-4xl font-semibold text-foreground">
+      <p className="mt-3 font-display text-3xl font-black text-foreground">
         {formatMetricValue(metric.current, type)}
       </p>
       <div className="mt-4 flex items-center justify-between gap-3">
         <div
-          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`polaris-badge gap-1 ${
             change === null
               ? "bg-slate-100 text-slate-700"
               : isPositive
@@ -48,11 +48,11 @@ export function MetricCard({
           )}
           {formatCompactPercent(change)}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-semibold text-muted-foreground">
           Prev {formatMetricValue(metric.previous, type)}
         </p>
       </div>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
+      <p className="mt-3 text-xs leading-5 text-muted-foreground">{description}</p>
     </article>
   );
 }

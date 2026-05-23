@@ -29,7 +29,7 @@ export function AppShell({ children, title }: AppShellProps) {
   if (!getToken()) {
     return (
       <div className="flex min-h-screen items-center justify-center px-6">
-        <div className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 px-8 py-6 text-center">
+        <div className="polaris-card px-8 py-6 text-center">
           <p className="font-display text-2xl font-semibold">Checking your session</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Redirecting if you need to sign in first.
@@ -40,12 +40,12 @@ export function AppShell({ children, title }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen px-4 py-4 lg:px-6">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl gap-4">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1540px] gap-0">
         <Sidebar />
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex min-w-0 flex-1 flex-col lg:rounded-l-[2rem] lg:bg-background">
           <Navbar title={title} onLogout={handleLogout} />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 px-4 py-5 lg:px-8 lg:py-7">{children}</main>
         </div>
       </div>
     </div>

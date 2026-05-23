@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
 import { UploadBox } from "@/components/UploadBox";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type { UploadItem } from "@/lib/types";
@@ -13,12 +14,14 @@ const statusStyles: Record<string, string> = {
   processing: "bg-sky-100 text-sky-800",
   completed: "bg-emerald-100 text-emerald-800",
   failed: "bg-rose-100 text-rose-800",
+  deleted: "bg-slate-100 text-slate-700",
 };
 
 export default function UploadsPage() {
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeUploadAction, setActiveUploadAction] = useState<string | null>(null);
 
   const loadUploads = async () => {
     if (!getToken()) {
@@ -46,6 +49,32 @@ export default function UploadsPage() {
     void runInitialLoad();
   }, []);
 
+  const handleDeleteUpload = async (uploadId: string) => {
+    setActiveUploadAction(`delete-${uploadId}`);
+    try {
+      await api.deleteUpload(uploadId);
+      await loadUploads();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete import.");
+    } finally {
+      setActiveUploadAction(null);
+    }
+  };
+
+  const handleReprocessUpload = async (uploadId: string) => {
+    setActiveUploadAction(`reprocess-${uploadId}`);
+    try {
+      await api.reprocessUpload(uploadId);
+      await loadUploads();
+    } catch (reprocessError) {
+      setError(
+        reprocessError instanceof Error ? reprocessError.message : "Failed to reprocess import.",
+      );
+    } finally {
+      setActiveUploadAction(null);
+    }
+  };
+
   return (
     <AppShell title="Uploads">
       <div className="space-y-6">
@@ -71,7 +100,7 @@ export default function UploadsPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-          <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+          <section className="polaris-card p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="font-display text-2xl font-semibold">Upload history</h2>
@@ -86,7 +115,7 @@ export default function UploadsPage() {
                 {Array.from({ length: 4 }).map((_, index) => (
                   <div
                     key={index}
-                    className="h-16 animate-pulse rounded-2xl border border-border bg-white/70"
+                    className="h-16 animate-pulse rounded-lg border border-border bg-card"
                   />
                 ))}
               </div>
@@ -98,14 +127,16 @@ export default function UploadsPage() {
                 description="Upload an orders CSV or ads CSV to start generating profit metrics."
               />
             ) : (
-              <div className="overflow-hidden rounded-3xl border border-border/80 bg-white/70">
+              <div className="overflow-hidden rounded-lg border border-border bg-card">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-accent/60 text-muted-foreground">
+                  <thead className="bg-muted text-muted-foreground">
                     <tr>
                       <th className="px-5 py-3 font-semibold">Type</th>
                       <th className="px-5 py-3 font-semibold">Status</th>
                       <th className="px-5 py-3 font-semibold">Uploaded</th>
+                      <th className="px-5 py-3 font-semibold">Rows</th>
                       <th className="px-5 py-3 font-semibold">Error</th>
+                      <th className="px-5 py-3 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -114,7 +145,7 @@ export default function UploadsPage() {
                         <td className="px-5 py-4 font-semibold capitalize">{upload.upload_type}</td>
                         <td className="px-5 py-4">
                           <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[upload.status] ?? "bg-slate-100 text-slate-700"}`}
+                            className={`polaris-badge ${statusStyles[upload.status] ?? "bg-slate-100 text-slate-700"}`}
                           >
                             {upload.status}
                           </span>
@@ -123,7 +154,38 @@ export default function UploadsPage() {
                           {new Date(upload.uploaded_at).toLocaleString()}
                         </td>
                         <td className="px-5 py-4 text-muted-foreground">
+                          {upload.rows_inserted} inserted · {upload.rows_skipped} skipped
+                        </td>
+                        <td className="px-5 py-4 text-muted-foreground">
                           {upload.error_message ?? "—"}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => void handleReprocessUpload(upload.id)}
+                              disabled={
+                                !upload.can_reprocess ||
+                                upload.status === "processing" ||
+                                activeUploadAction !== null
+                              }
+                            >
+                              {activeUploadAction === `reprocess-${upload.id}`
+                                ? "Reprocessing..."
+                                : "Reprocess"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => void handleDeleteUpload(upload.id)}
+                              disabled={
+                                upload.status === "processing" ||
+                                upload.status === "deleted" ||
+                                activeUploadAction !== null
+                              }
+                            >
+                              {activeUploadAction === `delete-${upload.id}` ? "Deleting..." : "Delete"}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -133,7 +195,7 @@ export default function UploadsPage() {
             )}
           </section>
 
-          <aside className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+          <aside className="polaris-card p-6">
             <h2 className="font-display text-2xl font-semibold">CSV sample format</h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               Column names are normalized automatically: spaces are converted to underscores,
@@ -141,19 +203,19 @@ export default function UploadsPage() {
             </p>
 
             <div className="mt-5 space-y-4">
-              <div className="rounded-3xl bg-foreground p-4 text-sm text-white/85">
+              <div className="rounded-lg bg-foreground p-4 text-sm text-white/85">
                 <p className="mb-2 text-white">Orders CSV</p>
                 <pre className="overflow-x-auto whitespace-pre-wrap">
                   order_date,order_id,sku,units,revenue,fees,refund
                 </pre>
               </div>
-              <div className="rounded-3xl border border-border bg-white/75 p-4 text-sm text-foreground">
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
                 <p className="mb-2 font-semibold">Ads CSV</p>
                 <pre className="overflow-x-auto whitespace-pre-wrap">
                   date,sku,spend,sales,clicks,impressions
                 </pre>
               </div>
-              <div className="rounded-3xl border border-border bg-white/75 p-4 text-sm text-foreground">
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
                 <p className="mb-2 font-semibold">Settlement CSV</p>
                 <pre className="overflow-x-auto whitespace-pre-wrap">
                   settlement_date,settlement_id,total_amount,fees,taxes,reimbursements

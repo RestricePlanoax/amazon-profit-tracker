@@ -4,12 +4,14 @@
 .venv/
 __pycache__/
 *.pyc
+.pip-cache/
 
 backend/storage/uploads/*
 !backend/storage/uploads/.gitkeep
 
 frontend/.next/
 frontend/node_modules/
+frontend/.npm-cache/
 frontend/npm-debug.log*
 
 backend/.pytest_cache/

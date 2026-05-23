@@ -40,6 +40,12 @@ class Store(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    import_batches = relationship(
+        "ImportBatch",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
     orders = relationship(
         "Order",
         back_populates="store",

@@ -68,29 +68,29 @@ export function UploadBox({
   };
 
   return (
-    <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+    <section className="polaris-card p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="font-display text-2xl font-semibold">{title}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
             {badge ? (
-              <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary">
+              <span className="polaris-badge bg-accent text-primary">
                 {badge}
               </span>
             ) : null}
           </div>
-          <p className="mt-2 text-sm leading-7 text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
-        <div className="rounded-2xl bg-accent p-3 text-primary">
+        <div className="rounded-lg bg-accent p-2.5 text-primary">
           <UploadCloud className="h-5 w-5" />
         </div>
       </div>
 
       <div
-        className={`mt-5 rounded-[1.5rem] border border-dashed p-5 transition ${
+        className={`mt-4 rounded-lg border border-dashed p-4 transition ${
           isDragging
             ? "border-primary bg-primary/6"
-            : "border-border bg-white/75"
+            : "border-border bg-[var(--surface-subdued)]"
         } ${disabled ? "opacity-70" : ""}`}
         onDragOver={(event) => {
           event.preventDefault();
@@ -116,7 +116,7 @@ export function UploadBox({
           accept=".csv,text/csv"
           disabled={disabled}
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          className="w-full text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
+          className="w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border file:border-primary file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-[#006e52]"
         />
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -144,7 +144,7 @@ export function UploadBox({
         ) : null}
 
         {status ? (
-          <p className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${statusTone}`}>
+          <p className={`mt-4 rounded-lg border px-3 py-2 text-sm ${statusTone}`}>
             {status}
           </p>
         ) : null}

@@ -37,3 +37,11 @@ class ProductProfitability(BaseModel):
     acos: float
     roas: float
     profit_per_unit: float
+
+
+class BulkCogsResult(BaseModel):
+    rows_processed: int
+    products_created: int
+    products_updated: int
+    rows_skipped: int
+    errors: list[str] = []

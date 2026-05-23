@@ -11,10 +11,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/60",
+    "border border-primary bg-primary text-primary-foreground shadow-sm shadow-emerald-950/10 hover:-translate-y-0.5 hover:bg-[#066656] disabled:border-[#95c9bc] disabled:bg-[#95c9bc]",
   outline:
-    "border border-border bg-white/75 text-foreground hover:bg-accent disabled:text-muted-foreground",
-  ghost: "bg-transparent text-foreground hover:bg-accent",
+    "border border-border bg-card text-foreground shadow-sm hover:-translate-y-0.5 hover:bg-[var(--surface-subdued)] disabled:text-muted-foreground",
+  ghost: "bg-transparent text-foreground hover:bg-muted",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -29,7 +29,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center gap-2 rounded-2xl text-sm font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--ring)] disabled:cursor-not-allowed disabled:hover:translate-y-0",
           variantClasses[variant],
           sizeClasses[size],
           className,

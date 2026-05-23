@@ -22,10 +22,10 @@ export function DateRangePicker({
   const [draftEndDate, setDraftEndDate] = useState(endDate);
 
   return (
-    <div className="flex flex-col gap-3 rounded-[1.5rem] border border-border bg-white/70 p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-[var(--surface-subdued)] p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <label className="text-xs font-semibold uppercase text-muted-foreground">
             Start date
           </label>
           <Input
@@ -37,7 +37,7 @@ export function DateRangePicker({
           />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <label className="text-xs font-semibold uppercase text-muted-foreground">
             End date
           </label>
           <Input

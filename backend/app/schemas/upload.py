@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class UploadRead(BaseModel):
     id: uuid.UUID
+    import_batch_id: uuid.UUID | None
     upload_type: str
     import_type: str
     status: str

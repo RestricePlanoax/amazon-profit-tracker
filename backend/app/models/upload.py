@@ -21,6 +21,12 @@ class Upload(Base):
         nullable=False,
         index=True,
     )
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("import_batches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     upload_type: Mapped[str] = mapped_column(String(32), nullable=False)
     import_type: Mapped[str] = mapped_column(String(32), default="csv", nullable=False)
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -35,3 +41,4 @@ class Upload(Base):
     )
 
     store = relationship("Store", back_populates="uploads")
+    import_batch = relationship("ImportBatch", back_populates="uploads")

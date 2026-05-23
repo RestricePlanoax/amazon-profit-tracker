@@ -5,8 +5,11 @@ import type {
   DashboardInsightsResponse,
   DashboardSummary,
   DateBounds,
+  DemoLoadResponse,
   Integration,
   IntegrationStatus,
+  BulkCogsResult,
+  MetricCatalogItem,
   Product,
   ProductProfitability,
   TrendPoint,
@@ -129,6 +132,18 @@ export const api = {
     return request<UploadItem[]>("/uploads");
   },
 
+  deleteUpload(uploadId: string) {
+    return request<UploadItem>(`/uploads/${uploadId}`, {
+      method: "DELETE",
+    });
+  },
+
+  reprocessUpload(uploadId: string) {
+    return request<UploadItem>(`/uploads/${uploadId}/reprocess`, {
+      method: "POST",
+    });
+  },
+
   uploadReport(uploadType: "orders" | "ads" | "settlement", file: File) {
     const formData = new FormData();
     formData.append("file", file);
@@ -149,5 +164,24 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ cogs }),
     });
+  },
+
+  bulkUploadCogs(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<BulkCogsResult>("/products/cogs/bulk", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  loadDemoStore() {
+    return request<DemoLoadResponse>("/demo/load", {
+      method: "POST",
+    });
+  },
+
+  getMetricCatalog() {
+    return request<MetricCatalogItem[]>("/metrics/catalog");
   },
 };

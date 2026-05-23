@@ -12,9 +12,9 @@ const severityStyles = {
 
 export function InsightsPanel({ data }: InsightsPanelProps) {
   return (
-    <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+    <section className="polaris-card p-6">
       <div className="mb-6 flex flex-col gap-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase text-muted-foreground">
           Seller insights
         </p>
         <h2 className="font-display text-2xl font-semibold">
@@ -27,11 +27,11 @@ export function InsightsPanel({ data }: InsightsPanelProps) {
         {data.insights.map((insight) => (
           <article
             key={insight.title}
-            className="rounded-[1.5rem] border border-border/70 bg-white/75 p-5"
+            className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5"
           >
             <div className="mb-3">
               <span
-                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${severityStyles[insight.severity]}`}
+                className={`polaris-badge ${severityStyles[insight.severity]}`}
               >
                 {insight.severity}
               </span>
@@ -42,7 +42,7 @@ export function InsightsPanel({ data }: InsightsPanelProps) {
         ))}
       </div>
 
-      <div className="mt-6 rounded-[1.5rem] border border-dashed border-border bg-accent/45 p-4 text-sm text-muted-foreground">
+      <div className="mt-6 rounded-lg border border-dashed border-border bg-[var(--surface-subdued)] p-4 text-sm text-muted-foreground">
         Recommendation scaffolding is ready for a future LLM call: the backend now prepares a prompt
         template plus metric knowledge chunks so we can later plug in retrieval and tailored seller recommendations.
       </div>

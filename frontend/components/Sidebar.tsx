@@ -21,14 +21,28 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="glass-panel hidden w-72 shrink-0 flex-col rounded-[2rem] border border-border/70 bg-card/82 p-5 lg:flex">
-      <Link href="/" className="rounded-[1.5rem] bg-foreground p-5 text-white">
-        <p className="text-sm uppercase tracking-[0.3em] text-white/60">Amazon seller</p>
-        <p className="mt-3 font-display text-2xl font-semibold">Profit Tracker</p>
-        <p className="mt-2 text-sm text-white/70">CSV uploads today, direct report sync next.</p>
+    <aside className="hidden w-72 shrink-0 flex-col bg-[var(--nav)] p-4 text-white lg:flex">
+      <Link
+        href="/"
+        className="rounded-[1.35rem] border border-white/10 bg-white/[0.06] p-4 text-white shadow-2xl shadow-black/20"
+      >
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--gold)] text-sm font-black text-foreground">
+            AP
+          </span>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-white/48">
+              Amazon seller
+            </p>
+            <p className="mt-1 text-lg font-black">Profit Tracker</p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-white/55">
+          CSV uploads, beta sync, and SKU profit decisions.
+        </p>
       </Link>
 
-      <nav className="mt-6 flex flex-1 flex-col gap-2">
+      <nav className="mt-5 flex flex-1 flex-col gap-1">
         {links.map((link) => {
           const Icon = link.icon;
           const active = pathname === link.href;
@@ -38,10 +52,10 @@ export function Sidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
                 active
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/10"
-                  : "text-muted-foreground hover:bg-white/70 hover:text-foreground",
+                  ? "bg-white text-foreground shadow-sm"
+                  : "text-white/62 hover:bg-white/[0.08] hover:text-white",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -51,7 +65,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="rounded-[1.5rem] border border-dashed border-border bg-white/70 p-4 text-sm text-muted-foreground">
+      <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.06] p-4 text-xs leading-5 text-white/58">
+        <p className="mb-2 font-black text-white">Margin hygiene</p>
         Update COGS from the Products page whenever sourcing costs change to keep margin accurate.
       </div>
     </aside>

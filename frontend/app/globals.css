@@ -1,22 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5efe3;
-  --foreground: #16211d;
-  --card: rgba(255, 252, 247, 0.82);
-  --card-foreground: #16211d;
-  --muted: #e9decb;
-  --muted-foreground: #5d675d;
-  --primary: #0f766e;
-  --primary-foreground: #effcf8;
-  --secondary: #f97316;
-  --secondary-foreground: #fff7ed;
-  --accent: #eff6f4;
-  --accent-foreground: #16302b;
-  --border: rgba(22, 33, 29, 0.08);
-  --danger: #b91c1c;
-  --danger-foreground: #fff5f5;
-  --ring: rgba(15, 118, 110, 0.18);
+  --background: #f5f2ea;
+  --foreground: #101828;
+  --card: #fffdf7;
+  --card-foreground: #101828;
+  --muted: #ede7db;
+  --muted-foreground: #667085;
+  --primary: #087667;
+  --primary-foreground: #ffffff;
+  --secondary: #2563eb;
+  --secondary-foreground: #ffffff;
+  --accent: #fff4df;
+  --accent-foreground: #101828;
+  --border: #ded6c8;
+  --danger: #d92d20;
+  --danger-foreground: #ffffff;
+  --ring: rgba(8, 118, 103, 0.24);
+  --surface-subdued: #fbf8f1;
+  --surface-selected: #e7f6f1;
+  --nav: #101828;
+  --nav-muted: #98a2b3;
+  --gold: #f3a712;
+  --rose: #f04438;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.08), 0 16px 44px rgba(16, 24, 40, 0.08);
+  --shadow-lift: 0 24px 80px rgba(16, 24, 40, 0.18);
 }
 
 @theme inline {
@@ -35,7 +43,7 @@
   --color-border: var(--border);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
-  --font-sans: var(--font-manrope);
+  --font-sans: "Avenir Next", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 @layer base {
@@ -44,32 +52,109 @@
   }
 
   html {
-    background:
-      radial-gradient(circle at top left, rgba(249, 115, 22, 0.16), transparent 38%),
-      radial-gradient(circle at top right, rgba(15, 118, 110, 0.15), transparent 42%),
-      linear-gradient(180deg, #f9f4eb 0%, #f5efe3 45%, #eef7f3 100%);
+    background: var(--background);
   }
 
   body {
     min-height: 100vh;
-    background: transparent;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(243, 167, 18, 0.12), transparent 28rem),
+      radial-gradient(circle at 82% 10%, rgba(8, 118, 103, 0.16), transparent 30rem),
+      var(--background);
     color: var(--foreground);
-    font-family: var(--font-manrope), sans-serif;
+    font-family: "Avenir Next", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    letter-spacing: 0;
   }
 }
 
 .font-display {
-  font-family: var(--font-space-grotesk), sans-serif;
-}
-
-.glass-panel {
-  backdrop-filter: blur(16px);
-  box-shadow: 0 24px 60px rgba(22, 33, 29, 0.1);
+  font-family: "Avenir Next", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -0.04em;
 }
 
 .data-grid {
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 100% 36px;
+}
+
+.polaris-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.polaris-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 18px;
+}
+
+.ds-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(222, 214, 200, 0.9);
+  border-radius: 24px;
+  background: rgba(255, 253, 247, 0.92);
+  box-shadow: var(--shadow-card);
+}
+
+.ds-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75), transparent 42%);
+}
+
+.ds-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(8, 118, 103, 0.18);
+  border-radius: 999px;
+  background: rgba(231, 246, 241, 0.9);
+  color: var(--primary);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(243, 167, 18, 0.22), transparent 24rem),
+    radial-gradient(circle at 85% 10%, rgba(50, 213, 131, 0.2), transparent 22rem),
+    linear-gradient(135deg, #101828 0%, #152033 52%, #073b3a 100%);
+  box-shadow: var(--shadow-lift);
+}
+
+.hero-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(22, 33, 29, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(22, 33, 29, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 90%);
+}
+
+.dashboard-frame {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 28px;
+  background: rgba(255, 253, 247, 0.96);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.32);
 }

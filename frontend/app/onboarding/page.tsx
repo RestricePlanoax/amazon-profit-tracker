@@ -17,7 +17,12 @@ import { Button } from "@/components/ui/button";
 import { UploadBox } from "@/components/UploadBox";
 import { api } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
-import type { IntegrationStatus, UploadItem, UserProfile } from "@/lib/types";
+import type {
+  IntegrationStatus,
+  MetricCatalogItem,
+  UploadItem,
+  UserProfile,
+} from "@/lib/types";
 
 type Step = "choose" | "connect" | "upload";
 
@@ -57,6 +62,7 @@ export default function OnboardingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus | null>(null);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [metricCatalog, setMetricCatalog] = useState<MetricCatalogItem[]>([]);
   const [marketplace, setMarketplace] = useState("IN");
   const [action, setAction] = useState<"connect" | "sync" | "reconnect" | "disconnect" | null>(
     null,
@@ -80,14 +86,16 @@ export default function OnboardingPage() {
 
     try {
       setError(null);
-      const [me, integration, uploadHistory] = await Promise.all([
+      const [me, integration, uploadHistory, metrics] = await Promise.all([
         api.getMe(),
         api.getIntegrationStatus(),
         api.getUploads(),
+        api.getMetricCatalog(),
       ]);
       setProfile(me);
       setIntegrationStatus(integration);
       setUploads(uploadHistory);
+      setMetricCatalog(metrics);
       if (integration.integration?.region) {
         setMarketplace(integration.integration.region.toUpperCase());
       }
@@ -209,11 +217,14 @@ export default function OnboardingPage() {
     latestJob?.status === "running";
   const progress = latestJob?.progress_percent ?? 0;
   const canSync = Boolean(integration && integration.status !== "disconnected");
+  const onboardingMetrics = metricCatalog
+    .filter((metric) => metric.onboarding_required)
+    .slice(0, 6);
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 px-8 py-6 text-center">
+        <div className="polaris-card px-8 py-6 text-center">
           <p className="font-display text-2xl font-semibold">Preparing onboarding</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Loading your store setup options.
@@ -226,9 +237,9 @@ export default function OnboardingPage() {
   return (
     <main className="min-h-screen px-6 py-8 lg:px-10">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="glass-panel flex flex-col gap-5 rounded-[2.5rem] border border-border/70 bg-card/85 p-8 lg:flex-row lg:items-end lg:justify-between">
+        <header className="polaris-card flex flex-col gap-5 p-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="font-display text-sm uppercase tracking-[0.3em] text-primary">
+            <p className="text-sm font-semibold text-primary">
               Seller onboarding
             </p>
             <h1 className="mt-4 font-display text-5xl font-semibold leading-tight">
@@ -262,7 +273,7 @@ export default function OnboardingPage() {
         </header>
 
         {error ? (
-          <div className="rounded-[1.75rem] border border-danger/20 bg-danger/8 px-5 py-4 text-sm text-danger">
+          <div className="rounded-lg border border-danger/20 bg-danger/8 px-5 py-4 text-sm text-danger">
             {error}
           </div>
         ) : null}
@@ -293,10 +304,10 @@ export default function OnboardingPage() {
           ].map((item) => (
             <div
               key={item.stepId}
-              className={`rounded-[1.75rem] border p-5 ${
+              className={`rounded-lg border p-5 ${
                 item.active
                   ? "border-primary bg-primary/8"
-                  : "border-border bg-white/75"
+                  : "border-border bg-card"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -312,12 +323,52 @@ export default function OnboardingPage() {
           ))}
         </section>
 
+        {onboardingMetrics.length > 0 ? (
+          <section className="polaris-card p-6">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
+                  Metric setup
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-semibold">
+                  First dashboard will focus on these seller outcomes
+                </h2>
+              </div>
+              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                This list comes from the backend metric catalog, so onboarding and the
+                dashboard stay aligned as we add more seller analytics.
+              </p>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {onboardingMetrics.map((metric) => (
+                <div
+                  key={metric.key}
+                  className="rounded-lg border border-border bg-[var(--surface-subdued)] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-display text-lg font-semibold">{metric.label}</p>
+                    <span className="polaris-badge bg-accent text-primary">
+                      {metric.category}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {metric.business_question}
+                  </p>
+                  <p className="mt-3 text-xs font-semibold text-muted-foreground">
+                    Formula: {metric.formula_label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {step === "choose" ? (
           <section className="grid gap-6 xl:grid-cols-2">
-            <article className="glass-panel rounded-[2.25rem] border border-border/70 bg-card/85 p-7">
+            <article className="polaris-card p-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Option A
                   </p>
                   <h2 className="mt-3 font-display text-3xl font-semibold">
@@ -328,7 +379,7 @@ export default function OnboardingPage() {
                     marketplace intent now so we can complete the sync flow next.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-accent p-3 text-primary">
+                <div className="rounded-lg bg-[var(--surface-selected)] p-3 text-secondary">
                   <Store className="h-6 w-6" />
                 </div>
               </div>
@@ -352,10 +403,10 @@ export default function OnboardingPage() {
               </Button>
             </article>
 
-            <article className="glass-panel rounded-[2.25rem] border border-border/70 bg-card/85 p-7">
+            <article className="polaris-card p-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Option B
                   </p>
                   <h2 className="mt-3 font-display text-3xl font-semibold">
@@ -366,7 +417,7 @@ export default function OnboardingPage() {
                     settlement and inventory onboarding slots already prepared.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-accent p-3 text-primary">
+                <div className="rounded-lg bg-[var(--surface-selected)] p-3 text-secondary">
                   <CloudUpload className="h-6 w-6" />
                 </div>
               </div>
@@ -394,8 +445,8 @@ export default function OnboardingPage() {
 
         {step === "connect" ? (
           <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <article className="glass-panel rounded-[2.25rem] border border-border/70 bg-card/85 p-7">
-              <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+            <article className="polaris-card p-7">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
                 Amazon connection beta
               </p>
               <h2 className="mt-3 font-display text-3xl font-semibold">
@@ -413,7 +464,7 @@ export default function OnboardingPage() {
               <select
                 value={marketplace}
                 onChange={(event) => setMarketplace(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm font-medium text-foreground outline-none focus:border-primary"
+                className="mt-2 w-full rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground outline-none focus:border-secondary"
               >
                 {marketplaces.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -432,7 +483,7 @@ export default function OnboardingPage() {
               </div>
             </article>
 
-            <aside className="glass-panel rounded-[2.25rem] border border-border/70 bg-card/85 p-7">
+            <aside className="polaris-card p-7">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <p className="font-display text-2xl font-semibold">Connection status</p>
@@ -440,17 +491,17 @@ export default function OnboardingPage() {
 
               {integration ? (
                 <div className="mt-6 space-y-4">
-                  <div className="rounded-[1.75rem] bg-foreground p-5 text-white">
+                  <div className="rounded-lg bg-foreground p-5 text-white">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm uppercase tracking-[0.2em] text-white/60">
+                        <p className="text-xs font-semibold uppercase text-white/60">
                           Provider
                         </p>
                         <p className="mt-2 font-display text-2xl font-semibold">
                           Amazon · {(integration.region ?? "pending").toUpperCase()}
                         </p>
                       </div>
-                      <div className="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white/80">
+                      <div className="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase text-white/80">
                         {getConnectionBadge(integration.status)}
                       </div>
                     </div>
@@ -463,10 +514,10 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-[1.75rem] border border-border bg-white/75 p-5">
+                  <div className="rounded-lg border border-border bg-[var(--surface-subdued)] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">
                           Latest sync job
                         </p>
                         <p className="mt-2 font-display text-xl font-semibold text-foreground">
@@ -485,7 +536,7 @@ export default function OnboardingPage() {
                         <p className="mt-3 text-sm text-muted-foreground">
                           {latestJob.status} · {latestJob.rows_processed} rows processed
                         </p>
-                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-accent">
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-primary transition-all duration-500"
                             style={{ width: `${progress}%` }}
@@ -537,7 +588,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 rounded-[1.75rem] border border-dashed border-border bg-white/75 p-6 text-sm text-muted-foreground">
+                <div className="mt-6 rounded-lg border border-dashed border-border bg-[var(--surface-subdued)] p-6 text-sm text-muted-foreground">
                   No Amazon connection record yet. Save your marketplace to create the first
                   integration row.
                 </div>
@@ -550,7 +601,7 @@ export default function OnboardingPage() {
           <section className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">
                   Manual import center
                 </p>
                 <h2 className="mt-2 font-display text-3xl font-semibold">
@@ -607,7 +658,7 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <section className="glass-panel rounded-[2rem] border border-border/70 bg-card/85 p-6">
+            <section className="polaris-card p-6">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h3 className="font-display text-2xl font-semibold">Current upload activity</h3>
@@ -622,13 +673,13 @@ export default function OnboardingPage() {
               </div>
 
               {uploads.length === 0 ? (
-                <div className="rounded-[1.75rem] border border-dashed border-border bg-white/75 p-6 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-border bg-[var(--surface-subdued)] p-6 text-sm text-muted-foreground">
                   No uploads yet. Start with orders and ads to unlock the dashboard immediately.
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-[1.75rem] border border-border/80 bg-white/75">
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-accent/70 text-muted-foreground">
+                    <thead className="bg-muted text-muted-foreground">
                       <tr>
                         <th className="px-4 py-3 font-semibold">Report</th>
                         <th className="px-4 py-3 font-semibold">Status</th>
@@ -657,7 +708,7 @@ export default function OnboardingPage() {
               )}
             </section>
 
-            <div className="rounded-[1.75rem] border border-border bg-white/75 p-5 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
               Need the full uploads workspace later? You can also use the dedicated{" "}
               <Link href="/uploads" className="font-semibold text-primary hover:text-primary/80">
                 uploads page
