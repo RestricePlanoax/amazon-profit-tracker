@@ -25,7 +25,7 @@ The app lets a seller:
 - Auth: JWT
 - Upload storage: local filesystem
 - Background work: FastAPI `BackgroundTasks`
-- Deployment: Docker Compose
+- Deployment: Docker Compose locally, Vercel Services for hosted MVP
 
 ## Repo Structure
 
@@ -34,6 +34,7 @@ amazon-profit-tracker/
   frontend/
   backend/
   docker-compose.yml
+  vercel.json
   sample_orders.csv
   sample_ads.csv
   sample_settlements.csv
@@ -96,6 +97,36 @@ Example values are included in [backend/.env.example](/Users/vishnu/Desktop/amaz
 - `NEXT_PUBLIC_API_BASE_URL`
 
 Example values are included in [frontend/.env.local.example](/Users/vishnu/Desktop/amazon-profit-tracker/frontend/.env.local.example).
+
+## Deploy On Vercel
+
+This repo uses Vercel Services so the Next.js frontend and FastAPI backend deploy from the same GitHub repo and share one domain.
+
+1. Import the GitHub repo in Vercel.
+2. Choose the `Services` application preset.
+3. Vercel should read [vercel.json](/Users/vishnu/Desktop/personals/amazon-profit-tracker/vercel.json) and detect:
+   - `frontend`: Next.js at `/`
+   - `backend`: FastAPI at `/api`
+4. Add environment variables in Vercel Project Settings:
+   - `DATABASE_URL`: production PostgreSQL URL from Neon, Supabase, Vercel Postgres, or another managed Postgres provider.
+   - `JWT_SECRET`: a long random secret.
+   - `ACCESS_TOKEN_EXPIRE_MINUTES`: `1440`
+   - `UPLOAD_DIR`: `/tmp/uploads`
+   - `CORS_ORIGINS`: your Vercel production URL, for example `https://amazon-profit-tracker.vercel.app`
+5. Deploy.
+6. Run migrations against the production database from your machine:
+
+```bash
+cd backend
+source .venv/bin/activate
+DATABASE_URL="postgresql+psycopg://USER:PASSWORD@HOST:PORT/DB?sslmode=require" alembic upgrade head
+```
+
+Notes:
+
+- The frontend reads Vercel's generated `NEXT_PUBLIC_BACKEND_URL` automatically, so you usually do not need to set `NEXT_PUBLIC_API_BASE_URL` on Vercel.
+- Local CSV upload storage is ephemeral on Vercel serverless. It is acceptable for a quick demo, but before selling paid plans, move uploads to durable storage such as Vercel Blob, S3, or Cloudflare R2.
+- BackgroundTasks can run for short MVP jobs, but larger Amazon report processing should move to a durable queue/worker later.
 
 ## Sample CSV Files
 
