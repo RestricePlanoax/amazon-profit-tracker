@@ -31,12 +31,35 @@ export type DashboardSummary = {
   metrics: DashboardMetricSet;
   last_data_refresh: string | null;
   data_sources: DataSourceStatus[];
+  range_coverage: RangeCoverageStatus[];
+  metric_trust: MetricTrust[];
 };
 
 export type DataSourceStatus = {
+  key: string;
   name: string;
   active: boolean;
+  status: string;
   last_refresh_at: string | null;
+};
+
+export type RangeCoverageStatus = {
+  key: string;
+  label: string;
+  covered_days: number;
+  expected_days: number;
+  coverage_pct: number;
+  status: "complete" | "partial" | "limited" | "missing";
+  latest_data_date: string | null;
+};
+
+export type MetricTrust = {
+  metric_key: keyof DashboardMetricSet;
+  powered_by: string[];
+  coverage_pct: number;
+  freshness_at: string | null;
+  status: "complete" | "partial" | "limited" | "missing";
+  note: string;
 };
 
 export type TrendPoint = {
@@ -218,4 +241,110 @@ export type ProductProfitability = {
   acos: number;
   roas: number;
   profit_per_unit: number;
+};
+
+export type ProfitAlert = {
+  id: string;
+  sku: string | null;
+  alert_type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  title: string;
+  message: string;
+  metric_value: number | null;
+  created_at: string;
+  resolved: boolean;
+  resolved_at: string | null;
+};
+
+export type ProfitAlertsResponse = {
+  summary: {
+    total_open: number;
+    high_priority: number;
+    margin_drop: number;
+    unexpected_fees: number;
+    ad_waste: number;
+    return_spike: number;
+    storage_risk: number;
+  };
+  alerts: ProfitAlert[];
+};
+
+export type ReturnAnalysisResponse = {
+  worst_variants: Array<{
+    sku: string;
+    variant: string;
+    return_rate: number;
+    refund_cost: number;
+    return_units: number;
+    top_reason: string | null;
+  }>;
+  top_return_reasons: Array<{
+    reason: string;
+    occurrences: number;
+    refund_cost: number;
+  }>;
+  summary_text: string;
+};
+
+export type ReimbursementsResponse = {
+  summary: {
+    total_pending_amount: number;
+    near_expiry_count: number;
+    open_cases: number;
+  };
+  cases: Array<{
+    id: string;
+    sku: string;
+    issue_type: string;
+    amount: number;
+    status: string;
+    detected_at: string;
+    claim_deadline: string | null;
+    claimed: boolean;
+    received: boolean;
+  }>;
+};
+
+export type StorageAnalysisResponse = {
+  summary_text: string;
+  slow_moving_inventory: Array<{
+    sku: string;
+    quantity: number;
+    days_in_storage: number;
+    monthly_storage_fee: number;
+    warning_level: string;
+    recommended_action: string;
+  }>;
+};
+
+export type AdAnalysisResponse = {
+  summary_text: string;
+  worst_campaigns: Array<{
+    campaign_id: string;
+    campaign_name: string;
+    sku: string;
+    daily_spend: number;
+    clicks: number;
+    orders: number;
+    acos: number;
+    roas: number;
+    conversion_rate: number;
+    waste_flag: boolean;
+  }>;
+};
+
+export type SellerInsight = {
+  id: string;
+  priority: string;
+  headline: string;
+  insight_text: string;
+  created_at: string;
+};
+
+export type DailyInsightsResponse = {
+  biggest_profit_leak: string | null;
+  worst_sku_today: string | null;
+  best_sku_today: string | null;
+  recommended_actions: string[];
+  insights: SellerInsight[];
 };

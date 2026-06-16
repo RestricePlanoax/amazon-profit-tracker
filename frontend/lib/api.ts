@@ -9,9 +9,16 @@ import type {
   Integration,
   IntegrationStatus,
   BulkCogsResult,
+  AdAnalysisResponse,
   MetricCatalogItem,
+  DailyInsightsResponse,
   Product,
   ProductProfitability,
+  ProfitAlert,
+  ProfitAlertsResponse,
+  ReimbursementsResponse,
+  ReturnAnalysisResponse,
+  StorageAnalysisResponse,
   TrendPoint,
   UploadItem,
   UserProfile,
@@ -150,7 +157,17 @@ export const api = {
     });
   },
 
-  uploadReport(uploadType: "orders" | "ads" | "settlement", file: File) {
+  uploadReport(
+    uploadType:
+      | "orders"
+      | "ads"
+      | "settlement"
+      | "returns"
+      | "reimbursements"
+      | "campaigns"
+      | "inventory",
+    file: File,
+  ) {
     const formData = new FormData();
     formData.append("file", file);
     return request<UploadItem>(`/uploads/${uploadType}`, {
@@ -189,5 +206,35 @@ export const api = {
 
   getMetricCatalog() {
     return request<MetricCatalogItem[]>("/metrics/catalog");
+  },
+
+  getProfitAlerts(includeResolved = false) {
+    return request<ProfitAlertsResponse>(`/profit-alerts?include_resolved=${includeResolved}`);
+  },
+
+  resolveProfitAlert(alertId: string) {
+    return request<ProfitAlert>(`/profit-alerts/${alertId}/resolve`, {
+      method: "POST",
+    });
+  },
+
+  getReturnAnalysis(range = "30d") {
+    return request<ReturnAnalysisResponse>(`/return-analysis?range=${range}`);
+  },
+
+  getReimbursements() {
+    return request<ReimbursementsResponse>("/reimbursements");
+  },
+
+  getStorageAnalysis() {
+    return request<StorageAnalysisResponse>("/storage-analysis");
+  },
+
+  getAdAnalysis(range = "30d") {
+    return request<AdAnalysisResponse>(`/ad-analysis?range=${range}`);
+  },
+
+  getDailyInsights() {
+    return request<DailyInsightsResponse>("/daily-insights");
   },
 };

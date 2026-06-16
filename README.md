@@ -6,7 +6,7 @@ The app lets a seller:
 
 - sign up with email and password
 - upload Amazon orders and ads CSV files
-- upload settlement reports and bulk COGS CSV files
+- upload settlement, returns, reimbursements, campaign, inventory, and bulk COGS CSV files
 - prevent duplicate imports with file hashes and row-level dedupe
 - delete or reprocess an import batch safely
 - load a demo store when a prospect wants to see value immediately
@@ -16,6 +16,7 @@ The app lets a seller:
 - switch between financial and efficiency line charts
 - render dashboard/onboarding metrics from a backend metric catalog
 - review rule-based seller insights with an LLM-ready recommendation scaffold
+- detect profit leaks, variant return issues, reimbursement recovery, storage risk, and PPC waste
 - review SKU-level profitability and update COGS per SKU
 
 ## Tech Stack
@@ -39,6 +40,9 @@ amazon-profit-tracker/
   sample_ads.csv
   sample_settlements.csv
   sample_inventory.csv
+  sample_returns.csv
+  sample_reimbursements.csv
+  sample_campaigns.csv
   sample_cogs.csv
   README.md
 ```
@@ -90,13 +94,13 @@ npm run dev
 - `UPLOAD_DIR`
 - `CORS_ORIGINS`
 
-Example values are included in [backend/.env.example](/Users/vishnu/Desktop/amazon-profit-tracker/backend/.env.example).
+Example values are included in [backend/.env.example](/Users/vishnu/Desktop/personals/amazon-profit-tracker/backend/.env.example).
 
 ### Frontend
 
 - `NEXT_PUBLIC_API_BASE_URL`
 
-Example values are included in [frontend/.env.local.example](/Users/vishnu/Desktop/amazon-profit-tracker/frontend/.env.local.example).
+Example values are included in [frontend/.env.local.example](/Users/vishnu/Desktop/personals/amazon-profit-tracker/frontend/.env.local.example).
 
 ## Deploy On Vercel
 
@@ -132,10 +136,14 @@ Notes:
 
 Root-level sample files are included so you can sign up and test the MVP quickly:
 
-- [sample_orders.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_orders.csv)
-- [sample_ads.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_ads.csv)
-- [sample_settlements.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_settlements.csv)
-- [sample_cogs.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_cogs.csv)
+- [sample_orders.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_orders.csv)
+- [sample_ads.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_ads.csv)
+- [sample_settlements.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_settlements.csv)
+- [sample_inventory.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_inventory.csv)
+- [sample_returns.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_returns.csv)
+- [sample_reimbursements.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_reimbursements.csv)
+- [sample_campaigns.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_campaigns.csv)
+- [sample_cogs.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_cogs.csv)
 
 These demo files now cover a longer date range from `2024-01-01` onward so the dashboard can show meaningful calendar-based trends and period-over-period change.
 
@@ -171,6 +179,34 @@ settlement_date,settlement_id,total_amount,fees,taxes,reimbursements
 sku,name,cogs
 SKU-001,Demo Bottle,420
 SKU-002,Demo Organizer,310
+```
+
+### Returns CSV
+
+```csv
+return_date,sku,variant,variant_sku,return_reason,refund_amount,returned_units
+2026-04-03,SKU-001,Black XL,SKU-001-BLK-XL,Size mismatch,699,1
+```
+
+### Reimbursements CSV
+
+```csv
+detected_at,sku,issue_type,amount,status,claim_deadline,claimed,received
+2026-04-04,SKU-001,lost_inventory,1450,pending,2026-04-30,false,false
+```
+
+### Campaign Metrics CSV
+
+```csv
+metric_date,campaign_id,campaign_name,sku,spend,sales,clicks,orders,acos,roas,conversion_rate
+2026-04-01,CAMP-001,Hydration Push,SKU-001,800,2200,48,6,36.36,2.75,12.5
+```
+
+### Inventory CSV
+
+```csv
+snapshot_date,sku,available_units,reserved_units,inbound_units,days_in_storage,monthly_storage_fee
+2026-04-20,SKU-001,140,12,40,35,420
 ```
 
 ## MVP Notes
@@ -212,6 +248,10 @@ profit_margin = net_profit / revenue * 100
 - `POST /uploads/orders`
 - `POST /uploads/ads`
 - `POST /uploads/settlement`
+- `POST /uploads/returns`
+- `POST /uploads/reimbursements`
+- `POST /uploads/campaigns`
+- `POST /uploads/inventory`
 - `GET /uploads`
 - `DELETE /uploads/{upload_id}`
 - `POST /uploads/{upload_id}/reprocess`
@@ -239,10 +279,10 @@ profit_margin = net_profit / revenue * 100
 1. Start the stack.
 2. Create a new account from the landing page.
 3. Open the Uploads page.
-4. Upload [sample_orders.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_orders.csv).
-5. Upload [sample_ads.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_ads.csv).
-6. Optionally upload [sample_settlements.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_settlements.csv).
-7. Optionally upload [sample_cogs.csv](/Users/vishnu/Desktop/amazon-profit-tracker/sample_cogs.csv) from the Products page.
+4. Upload [sample_orders.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_orders.csv).
+5. Upload [sample_ads.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_ads.csv).
+6. Optionally upload [sample_settlements.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_settlements.csv).
+7. Optionally upload [sample_cogs.csv](/Users/vishnu/Desktop/personals/amazon-profit-tracker/sample_cogs.csv) from the Products page.
 8. Open Dashboard and Products to verify daily and SKU-level profit metrics.
 
 For a faster prospect demo, create an account and click **Load demo store** on the dashboard.

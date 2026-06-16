@@ -1,0 +1,3 @@
+settlement_date,settlement_id,total_amount,fees,taxes,reimbursements
+2026-04-01,SET001,12000,1400,240,100
+2026-04-15,SET002,18500,2200,370,0

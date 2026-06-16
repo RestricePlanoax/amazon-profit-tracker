@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,6 +39,8 @@ class Inventory(Base):
     available_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     reserved_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     inbound_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    days_in_storage: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    monthly_storage_fee: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

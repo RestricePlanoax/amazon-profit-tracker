@@ -12,18 +12,23 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_store
-from app.models.store import Store
 from app.models.ad import Ad
+from app.models.ad_campaign_metric import AdCampaignMetric
 from app.models.import_batch import ImportBatch
 from app.models.inventory import Inventory
 from app.models.order import Order
+from app.models.reimbursement import Reimbursement
+from app.models.return_analytics import ReturnAnalytics
 from app.models.settlement import Settlement
+from app.models.store import Store
 from app.models.upload import Upload
 from app.schemas.upload import UploadRead
+from app.services.analysis_runner import StoreAnalysisRunner
 from app.workers.process_upload import process_upload
 
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
+analysis_runner = StoreAnalysisRunner()
 
 
 def _parse_upload_id(upload_id: str) -> UUID:
@@ -121,7 +126,7 @@ def _queue_upload(
 
 
 def _delete_batch_rows(db: Session, store_id, batch_id) -> None:
-    for model in [Order, Ad, Settlement, Inventory]:
+    for model in [Order, Ad, Settlement, Inventory, ReturnAnalytics, Reimbursement, AdCampaignMetric]:
         db.execute(
             delete(model)
             .where(model.store_id == store_id)
@@ -162,6 +167,54 @@ def upload_settlement(
 ) -> UploadRead:
     return UploadRead.model_validate(
         _queue_upload("settlement", file, background_tasks, current_store, db)
+    )
+
+
+@router.post("/returns", response_model=UploadRead, status_code=status.HTTP_202_ACCEPTED)
+def upload_returns(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_store: Store = Depends(get_current_store),
+    db: Session = Depends(get_db),
+) -> UploadRead:
+    return UploadRead.model_validate(
+        _queue_upload("returns", file, background_tasks, current_store, db)
+    )
+
+
+@router.post("/reimbursements", response_model=UploadRead, status_code=status.HTTP_202_ACCEPTED)
+def upload_reimbursements(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_store: Store = Depends(get_current_store),
+    db: Session = Depends(get_db),
+) -> UploadRead:
+    return UploadRead.model_validate(
+        _queue_upload("reimbursements", file, background_tasks, current_store, db)
+    )
+
+
+@router.post("/campaigns", response_model=UploadRead, status_code=status.HTTP_202_ACCEPTED)
+def upload_campaigns(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_store: Store = Depends(get_current_store),
+    db: Session = Depends(get_db),
+) -> UploadRead:
+    return UploadRead.model_validate(
+        _queue_upload("campaigns", file, background_tasks, current_store, db)
+    )
+
+
+@router.post("/inventory", response_model=UploadRead, status_code=status.HTTP_202_ACCEPTED)
+def upload_inventory(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_store: Store = Depends(get_current_store),
+    db: Session = Depends(get_db),
+) -> UploadRead:
+    return UploadRead.model_validate(
+        _queue_upload("inventory", file, background_tasks, current_store, db)
     )
 
 
@@ -217,6 +270,7 @@ def delete_upload(
     from app.services.metrics_service import recompute_daily_metrics
 
     recompute_daily_metrics(db, current_store.id)
+    analysis_runner.run(db, current_store.id)
     db.commit()
     db.refresh(upload)
     return UploadRead.model_validate(upload)

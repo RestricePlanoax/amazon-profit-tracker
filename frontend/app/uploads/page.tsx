@@ -84,18 +84,56 @@ export default function UploadsPage() {
             description="Accepted columns: order_date, order_id, sku, units, revenue, fees, refund"
             uploadType="orders"
             onUploaded={loadUploads}
+            helpText="Start here if you want revenue, orders, units, and profit by SKU/day immediately."
+            sampleHref="/sample_orders.csv"
           />
           <UploadBox
             title="Upload ads CSV"
             description="Accepted columns: date, sku, spend, sales, clicks, impressions"
             uploadType="ads"
             onUploaded={loadUploads}
+            helpText="Feeds TACOS, ACOS, ROAS, CPC, and ad leakage analysis."
+            sampleHref="/sample_ads.csv"
           />
           <UploadBox
             title="Upload settlement CSV"
             description="Accepted columns: settlement_date, settlement_id, total_amount, fees, taxes, reimbursements"
             uploadType="settlement"
             onUploaded={loadUploads}
+            helpText="Adds payout realism through taxes, fees, and reimbursements."
+            sampleHref="/sample_settlements.csv"
+          />
+          <UploadBox
+            title="Upload returns CSV"
+            description="Accepted columns: return_date, sku, variant, return_reason, refund_amount, returned_units"
+            uploadType="returns"
+            onUploaded={loadUploads}
+            helpText="Use this to surface return-heavy variants and refund spikes."
+            sampleHref="/sample_returns.csv"
+          />
+          <UploadBox
+            title="Upload reimbursements CSV"
+            description="Accepted columns: detected_at, sku, issue_type, amount, status, claim_deadline"
+            uploadType="reimbursements"
+            onUploaded={loadUploads}
+            helpText="Tracks cases where Amazon still owes the seller money."
+            sampleHref="/sample_reimbursements.csv"
+          />
+          <UploadBox
+            title="Upload campaign metrics CSV"
+            description="Accepted columns: metric_date, campaign_id, sku, spend, clicks, orders"
+            uploadType="campaigns"
+            onUploaded={loadUploads}
+            helpText="Best source for campaign-level PPC waste detection."
+            sampleHref="/sample_campaigns.csv"
+          />
+          <UploadBox
+            title="Upload inventory CSV"
+            description="Accepted columns: snapshot_date, sku, available_units, reserved_units, inbound_units"
+            uploadType="inventory"
+            onUploaded={loadUploads}
+            helpText="Storage risk becomes much more accurate when age and fees are included."
+            sampleHref="/sample_inventory.csv"
           />
         </div>
 
@@ -124,7 +162,7 @@ export default function UploadsPage() {
             ) : uploads.length === 0 ? (
               <EmptyState
                 title="No reports uploaded yet"
-                description="Upload an orders CSV or ads CSV to start generating profit metrics."
+                description="Upload orders, ads, returns, reimbursements, campaigns, or inventory CSVs to start generating deeper seller analytics."
               />
             ) : (
               <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -219,6 +257,30 @@ export default function UploadsPage() {
                 <p className="mb-2 font-semibold">Settlement CSV</p>
                 <pre className="overflow-x-auto whitespace-pre-wrap">
                   settlement_date,settlement_id,total_amount,fees,taxes,reimbursements
+                </pre>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+                <p className="mb-2 font-semibold">Returns CSV</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap">
+                  return_date,sku,variant,variant_sku,return_reason,refund_amount,returned_units
+                </pre>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+                <p className="mb-2 font-semibold">Reimbursements CSV</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap">
+                  detected_at,sku,issue_type,amount,status,claim_deadline,claimed,received
+                </pre>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+                <p className="mb-2 font-semibold">Campaign metrics CSV</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap">
+                  metric_date,campaign_id,campaign_name,sku,spend,sales,clicks,orders,acos,roas,conversion_rate
+                </pre>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+                <p className="mb-2 font-semibold">Inventory CSV</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap">
+                  snapshot_date,sku,available_units,reserved_units,inbound_units,days_in_storage,monthly_storage_fee
                 </pre>
               </div>
             </div>

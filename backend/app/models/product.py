@@ -31,3 +31,9 @@ class Product(Base):
     )
 
     store = relationship("Store", back_populates="products")
+    variants = relationship(
+        "ProductVariant",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

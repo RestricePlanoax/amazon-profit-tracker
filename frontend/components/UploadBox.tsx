@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +7,14 @@ import { api } from "@/lib/api";
 type UploadBoxProps = {
   title: string;
   description: string;
-  uploadType?: "orders" | "ads" | "settlement";
+  uploadType?:
+    | "orders"
+    | "ads"
+    | "settlement"
+    | "returns"
+    | "reimbursements"
+    | "campaigns"
+    | "inventory";
   onUploaded: () => Promise<void>;
   helpText?: string;
   sampleHref?: string;
@@ -136,9 +141,13 @@ export function UploadBox({
           <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
             {helpText ? <p>{helpText}</p> : null}
             {sampleHref ? (
-              <Link href={sampleHref} className="font-semibold text-primary hover:text-primary/80">
-                Open sample CSV
-              </Link>
+              <a
+                href={sampleHref}
+                download
+                className="font-semibold text-primary hover:text-primary/80"
+              >
+                Download sample CSV
+              </a>
             ) : null}
           </div>
         ) : null}

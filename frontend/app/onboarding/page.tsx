@@ -648,13 +648,40 @@ export default function OnboardingPage() {
                 badge="Live now"
               />
               <UploadBox
-                title="Inventory CSV"
-                description="Prepare stock snapshots for future sell-through and stockout analysis."
+                title="Returns CSV"
+                description="Expose return-heavy variants, refund drag, and top return reasons."
+                uploadType="returns"
                 onUploaded={refreshUploads}
-                helpText="Inventory schema is ready now so the next import step can plug straight into it."
+                helpText="Best for variant-level return intelligence and margin leakage alerts."
+                sampleHref="/sample_returns.csv"
+                badge="Live now"
+              />
+              <UploadBox
+                title="Reimbursements CSV"
+                description="Track lost inventory, damage claims, and pending recoveries Amazon owes."
+                uploadType="reimbursements"
+                onUploaded={refreshUploads}
+                helpText="Feeds reimbursement recovery cards, deadline tracking, and daily briefings."
+                sampleHref="/sample_reimbursements.csv"
+                badge="Live now"
+              />
+              <UploadBox
+                title="Campaign metrics CSV"
+                description="Import campaign-level spend, sales, clicks, and orders."
+                uploadType="campaigns"
+                onUploaded={refreshUploads}
+                helpText="Powers PPC waste detection beyond SKU-level ad aggregates."
+                sampleHref="/sample_campaigns.csv"
+                badge="Live now"
+              />
+              <UploadBox
+                title="Inventory CSV"
+                description="Bring storage age and carrying cost into the same operations view."
+                uploadType="inventory"
+                onUploaded={refreshUploads}
+                helpText="Supports storage fee warnings, slow-moving inventory, and liquidation prompts."
                 sampleHref="/sample_inventory.csv"
-                disabled
-                badge="Optional"
+                badge="Live now"
               />
             </div>
 

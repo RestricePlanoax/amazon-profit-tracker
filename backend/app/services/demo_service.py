@@ -10,12 +10,22 @@ from sqlalchemy.orm import Session
 
 from app.core.database import utcnow
 from app.models.ad import Ad
+from app.models.ad_campaign_metric import AdCampaignMetric
 from app.models.import_batch import ImportBatch
 from app.models.inventory import Inventory
 from app.models.order import Order
 from app.models.product import Product
+from app.models.product_variant import ProductVariant
+from app.models.reimbursement import Reimbursement
+from app.models.return_analytics import ReturnAnalytics
+from app.models.seller_insight import SellerInsight
+from app.models.profit_alert import ProfitAlert
+from app.models.inventory_aging import InventoryAging
 from app.models.settlement import Settlement
+from app.services.analysis_runner import StoreAnalysisRunner
 from app.services.metrics_service import recompute_daily_metrics
+
+analysis_runner = StoreAnalysisRunner()
 
 
 DEMO_PRODUCTS = [
@@ -52,6 +62,8 @@ def _clear_previous_demo_data(db: Session, store_id: uuid.UUID) -> None:
             .where(model.store_id == store_id)
             .where(model.import_batch_id.in_(batch_ids))
         )
+    for model in [ProductVariant, ReturnAnalytics, Reimbursement, AdCampaignMetric, InventoryAging, ProfitAlert, SellerInsight]:
+        db.execute(delete(model).where(model.store_id == store_id))
     db.execute(delete(ImportBatch).where(ImportBatch.id.in_(batch_ids)))
 
 
@@ -76,14 +88,35 @@ def load_demo_store(db: Session, store_id: uuid.UUID) -> tuple[ImportBatch, int]
     today = date.today()
     start_date = today - timedelta(days=179)
 
+    variant_records: list[tuple[str, str, str]] = []
     for sku, name, cogs, _, _ in DEMO_PRODUCTS:
         product = db.scalar(select(Product).where(Product.store_id == store_id, Product.sku == sku))
         if product is None:
-            db.add(Product(store_id=store_id, sku=sku, name=name, cogs=cogs))
+            product = Product(store_id=store_id, sku=sku, name=name, cogs=cogs)
+            db.add(product)
         else:
             product.name = name
             product.cogs = cogs
         rows_inserted += 1
+        db.flush()
+        variant_records.extend(
+            [
+                (sku, f"{sku}-STD", "Standard"),
+                (sku, f"{sku}-XL", "XL"),
+            ]
+        )
+        for _, variant_sku, variant_name in variant_records[-2:]:
+            if db.scalar(
+                select(ProductVariant).where(ProductVariant.store_id == store_id, ProductVariant.sku == variant_sku)
+            ) is None:
+                db.add(
+                    ProductVariant(
+                        product_id=product.id,
+                        store_id=store_id,
+                        variant_name=variant_name,
+                        sku=variant_sku,
+                    )
+                )
 
     for day_offset in range(180):
         metric_date = start_date + timedelta(days=day_offset)
@@ -132,7 +165,22 @@ def load_demo_store(db: Session, store_id: uuid.UUID) -> tuple[ImportBatch, int]
                     impressions=impressions,
                 )
             )
-            rows_inserted += 2
+            db.add(
+                AdCampaignMetric(
+                    store_id=store_id,
+                    campaign_id=f"DEMO-CAMPAIGN-{product_index + 1}",
+                    campaign_name=f"{sku} Growth Campaign",
+                    sku=sku,
+                    metric_date=metric_date,
+                    daily_spend=ad_spend,
+                    clicks=clicks,
+                    orders=units,
+                    acos=_money((ad_spend / ad_sales) * Decimal("100")) if ad_sales else Decimal("0"),
+                    roas=_money(ad_sales / ad_spend) if ad_spend else Decimal("0"),
+                    conversion_rate=_money((Decimal(units) / Decimal(clicks)) * Decimal("100")) if clicks else Decimal("0"),
+                )
+            )
+            rows_inserted += 3
 
         if day_offset % 14 == 0:
             total_amount = Decimal("24500.00") + Decimal(day_offset * 175)
@@ -162,11 +210,48 @@ def load_demo_store(db: Session, store_id: uuid.UUID) -> tuple[ImportBatch, int]
                 available_units=120 - product_index * 18,
                 reserved_units=8 + product_index * 2,
                 inbound_units=22 + product_index * 6,
+                days_in_storage=35 + product_index * 28,
+                monthly_storage_fee=Decimal("420.00") + Decimal(product_index * 185),
+            )
+        )
+        rows_inserted += 1
+
+    for variant_index, (base_sku, variant_sku, variant_name) in enumerate(variant_records):
+        product_variant = db.scalar(
+            select(ProductVariant).where(ProductVariant.store_id == store_id, ProductVariant.sku == variant_sku)
+        )
+        db.add(
+            ReturnAnalytics(
+                store_id=store_id,
+                product_variant_id=product_variant.id if product_variant else None,
+                sku=base_sku,
+                variant=variant_name,
+                return_reason="Size mismatch" if variant_name == "XL" else "Changed mind",
+                refund_amount=Decimal("249.00") if variant_name == "XL" else Decimal("79.00"),
+                returned_units=3 if variant_name == "XL" else 1,
+                return_date=today - timedelta(days=variant_index * 2),
+            )
+        )
+        rows_inserted += 1
+
+    for product_index, (sku, _, _, _, _) in enumerate(DEMO_PRODUCTS[:3]):
+        db.add(
+            Reimbursement(
+                store_id=store_id,
+                sku=sku,
+                issue_type="lost_inventory" if product_index == 0 else "warehouse_damage",
+                amount=Decimal("1450.00") + Decimal(product_index * 325),
+                status="pending",
+                detected_at=today - timedelta(days=7 + product_index),
+                claim_deadline=today + timedelta(days=21 - product_index * 4),
+                claimed=False,
+                received=False,
             )
         )
         rows_inserted += 1
 
     recompute_daily_metrics(db, store_id)
+    analysis_runner.run(db, store_id)
     batch.status = "completed"
     batch.rows_inserted = rows_inserted
     batch.completed_at = utcnow()

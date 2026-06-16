@@ -20,6 +20,40 @@ from app.models.upload import Upload
 
 MIN_SELECTABLE_DATE = date(2024, 1, 1)
 
+SOURCE_LABELS = {
+    "orders": "Orders",
+    "ads": "Ads",
+    "settlement": "Settlements",
+    "returns": "Returns",
+    "reimbursements": "Reimbursements",
+    "campaigns": "Campaigns",
+    "inventory": "Inventory",
+    "amazon_sync": "Amazon Sync",
+}
+
+METRIC_SOURCE_MAP = {
+    "revenue": ["orders"],
+    "net_profit": ["orders", "ads", "settlement"],
+    "profit_margin": ["orders", "ads", "settlement"],
+    "tacos": ["orders", "ads"],
+    "acos": ["ads"],
+    "refund_rate": ["orders"],
+    "ad_spend": ["ads"],
+    "roas": ["ads"],
+    "avg_order_value": ["orders"],
+    "orders_count": ["orders"],
+    "units_sold": ["orders"],
+    "ctr": ["ads"],
+    "cpc": ["ads"],
+    "ad_sales": ["ads"],
+    "fees": ["orders"],
+    "taxes": ["settlement"],
+    "reimbursements": ["settlement"],
+    "refunds": ["orders"],
+    "cogs": ["orders"],
+    "profit_per_order": ["orders", "ads", "settlement"],
+}
+
 
 def _decimal(value: Decimal | None) -> Decimal:
     return value or Decimal("0")
@@ -338,6 +372,135 @@ def _serialise_metric_bundle(current: dict[str, Decimal], previous: dict[str, De
     }
 
 
+def _coverage_status_label(coverage_pct: float) -> str:
+    if coverage_pct >= 95:
+        return "complete"
+    if coverage_pct >= 40:
+        return "partial"
+    if coverage_pct > 0:
+        return "limited"
+    return "missing"
+
+
+def _get_upload_data_sources(db: Session, store_id) -> list[dict[str, Any]]:
+    upload_types = ["orders", "ads", "settlement", "returns", "reimbursements", "campaigns", "inventory"]
+    data_sources: list[dict[str, Any]] = []
+    for upload_type in upload_types:
+        latest_upload_at = db.scalar(
+            select(func.max(Upload.uploaded_at))
+            .where(Upload.store_id == store_id)
+            .where(Upload.upload_type == upload_type)
+            .where(Upload.status == "completed")
+        )
+        data_sources.append(
+            {
+                "key": upload_type,
+                "name": SOURCE_LABELS[upload_type],
+                "active": latest_upload_at is not None,
+                "status": "healthy" if latest_upload_at is not None else "waiting",
+                "last_refresh_at": latest_upload_at.isoformat() if latest_upload_at else None,
+            }
+        )
+    return data_sources
+
+
+def _get_range_coverage(db: Session, store_id, start_date: date, end_date: date) -> list[dict[str, Any]]:
+    expected_days = (end_date - start_date).days + 1
+    source_queries = {
+        "orders": (
+            select(
+                func.count(func.distinct(Order.order_date)).label("covered_days"),
+                func.max(Order.order_date).label("latest_data_date"),
+            )
+            .where(Order.store_id == store_id)
+            .where(Order.order_date >= start_date)
+            .where(Order.order_date <= end_date)
+        ),
+        "ads": (
+            select(
+                func.count(func.distinct(Ad.date)).label("covered_days"),
+                func.max(Ad.date).label("latest_data_date"),
+            )
+            .where(Ad.store_id == store_id)
+            .where(Ad.date >= start_date)
+            .where(Ad.date <= end_date)
+        ),
+        "settlement": (
+            select(
+                func.count(func.distinct(Settlement.settlement_date)).label("covered_days"),
+                func.max(Settlement.settlement_date).label("latest_data_date"),
+            )
+            .where(Settlement.store_id == store_id)
+            .where(Settlement.settlement_date >= start_date)
+            .where(Settlement.settlement_date <= end_date)
+        ),
+    }
+
+    coverage_rows: list[dict[str, Any]] = []
+    for source_key, query in source_queries.items():
+        row = db.execute(query).one()
+        covered_days = int(row.covered_days or 0)
+        coverage_pct = round((covered_days / expected_days) * 100, 2) if expected_days else 0.0
+        coverage_rows.append(
+            {
+                "key": source_key,
+                "label": SOURCE_LABELS[source_key],
+                "covered_days": covered_days,
+                "expected_days": expected_days,
+                "coverage_pct": coverage_pct,
+                "status": _coverage_status_label(coverage_pct),
+                "latest_data_date": row.latest_data_date.isoformat() if row.latest_data_date else None,
+            }
+        )
+    return coverage_rows
+
+
+def _build_metric_trust(
+    data_sources: list[dict[str, Any]],
+    range_coverage: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    data_source_map = {source["key"]: source for source in data_sources}
+    coverage_map = {row["key"]: row for row in range_coverage}
+    trust_rows: list[dict[str, Any]] = []
+
+    for metric_key, sources in METRIC_SOURCE_MAP.items():
+        coverage_values = [coverage_map[source]["coverage_pct"] for source in sources if source in coverage_map]
+        coverage_pct = round(sum(coverage_values) / len(coverage_values), 2) if coverage_values else 0.0
+        freshness_candidates = [
+            data_source_map[source]["last_refresh_at"]
+            for source in sources
+            if source in data_source_map and data_source_map[source]["last_refresh_at"]
+        ]
+        status = _coverage_status_label(coverage_pct)
+        missing_sources = [
+            SOURCE_LABELS[source]
+            for source in sources
+            if source in coverage_map and coverage_map[source]["coverage_pct"] == 0
+        ]
+
+        if missing_sources:
+            note = f"Powered by {', '.join(SOURCE_LABELS[source] for source in sources)}. Missing {', '.join(missing_sources)} in the selected range."
+        elif status == "partial":
+            note = f"Powered by {', '.join(SOURCE_LABELS[source] for source in sources)} with partial date coverage."
+        elif status == "limited":
+            note = f"Powered by {', '.join(SOURCE_LABELS[source] for source in sources)} but only lightly covered in the selected window."
+        else:
+            note = f"Powered by {', '.join(SOURCE_LABELS[source] for source in sources)}."
+
+        trust_rows.append(
+            {
+                "metric_key": metric_key,
+                "powered_by": [SOURCE_LABELS[source] for source in sources],
+                "coverage_pct": coverage_pct,
+                "freshness_at": max(freshness_candidates) if freshness_candidates else None,
+                "status": status,
+                "note": note,
+            }
+        )
+
+    return trust_rows
+
+
 def get_dashboard_data_freshness(db: Session, store_id) -> dict[str, Any]:
     latest_upload_at = db.scalar(
         select(func.max(Upload.uploaded_at))
@@ -350,21 +513,20 @@ def get_dashboard_data_freshness(db: Session, store_id) -> dict[str, Any]:
 
     last_refresh_candidates = [value for value in [latest_upload_at, latest_sync_at] if value]
     last_data_refresh = max(last_refresh_candidates) if last_refresh_candidates else None
+    data_sources = _get_upload_data_sources(db, store_id)
+    data_sources.append(
+        {
+            "key": "amazon_sync",
+            "name": SOURCE_LABELS["amazon_sync"],
+            "active": latest_sync_at is not None,
+            "status": "healthy" if latest_sync_at is not None else "waiting",
+            "last_refresh_at": latest_sync_at.isoformat() if latest_sync_at else None,
+        }
+    )
 
     return {
         "last_data_refresh": last_data_refresh.isoformat() if last_data_refresh else None,
-        "data_sources": [
-            {
-                "name": "CSV Uploads",
-                "active": latest_upload_at is not None,
-                "last_refresh_at": latest_upload_at.isoformat() if latest_upload_at else None,
-            },
-            {
-                "name": "Amazon Sync",
-                "active": latest_sync_at is not None,
-                "last_refresh_at": latest_sync_at.isoformat() if latest_sync_at else None,
-            },
-        ],
+        "data_sources": data_sources,
     }
 
 
@@ -382,6 +544,9 @@ def get_dashboard_summary(
 
     current_metrics = _aggregate_period_metrics(db, store_id, start_date, end_date)
     previous_metrics = _aggregate_period_metrics(db, store_id, previous_start_date, previous_end_date)
+    freshness = get_dashboard_data_freshness(db, store_id)
+    range_coverage = _get_range_coverage(db, store_id, start_date, end_date)
+    metric_trust = _build_metric_trust(freshness["data_sources"], range_coverage)
 
     return {
         "start_date": start_date.isoformat(),
@@ -389,7 +554,9 @@ def get_dashboard_summary(
         "previous_start_date": previous_start_date.isoformat(),
         "previous_end_date": previous_end_date.isoformat(),
         "metrics": _serialise_metric_bundle(current_metrics, previous_metrics),
-        **get_dashboard_data_freshness(db, store_id),
+        **freshness,
+        "range_coverage": range_coverage,
+        "metric_trust": metric_trust,
     }
 
 

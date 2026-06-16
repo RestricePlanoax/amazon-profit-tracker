@@ -1,0 +1,4 @@
+return_date,sku,variant,variant_sku,return_reason,refund_amount,returned_units
+2026-04-03,SKU-001,Black XL,SKU-001-BLK-XL,Size mismatch,699,1
+2026-04-05,SKU-001,Black XL,SKU-001-BLK-XL,Too large,699,1
+2026-04-06,SKU-002,Blue M,SKU-002-BLU-M,Changed mind,299,1

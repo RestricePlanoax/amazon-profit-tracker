@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BadgeAlert,
   ChartColumnIncreasing,
   CloudUpload,
   PackageSearch,
+  ScanSearch,
+  Sparkles,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: ChartColumnIncreasing },
+  { href: "/alerts", label: "Profit Leaks", icon: BadgeAlert },
+  { href: "/briefing", label: "Daily Briefing", icon: Sparkles },
+  { href: "/operations", label: "Operations", icon: ScanSearch },
   { href: "/uploads", label: "Uploads", icon: CloudUpload },
   { href: "/products", label: "Products", icon: PackageSearch },
   { href: "/settings", label: "Settings", icon: Settings },

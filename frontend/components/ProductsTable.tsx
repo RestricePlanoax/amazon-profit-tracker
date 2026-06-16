@@ -5,17 +5,18 @@ import { ArrowDown, ArrowUp, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import type { ProductProfitability } from "@/lib/types";
+import type { MetricTrust, ProductProfitability } from "@/lib/types";
 import { formatCurrency, formatMetricValue } from "@/lib/utils";
 
 type ProductsTableProps = {
   products: ProductProfitability[];
   onRefresh: () => Promise<void>;
+  trustMetrics?: MetricTrust[];
 };
 
 type SortDirection = "asc" | "desc";
 
-export function ProductsTable({ products, onRefresh }: ProductsTableProps) {
+export function ProductsTable({ products, onRefresh, trustMetrics = [] }: ProductsTableProps) {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingSku, setSavingSku] = useState<string | null>(null);
@@ -60,6 +61,24 @@ export function ProductsTable({ products, onRefresh }: ProductsTableProps) {
           <p className="mt-1 text-sm text-muted-foreground">
             Rows with negative profit margin are highlighted so loss-making products stand out.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {trustMetrics.map((trust) => (
+              <span
+                key={trust.metric_key}
+                className={`polaris-badge ${
+                  trust.status === "complete"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : trust.status === "partial"
+                      ? "bg-amber-100 text-amber-800"
+                      : trust.status === "limited"
+                        ? "bg-orange-100 text-orange-800"
+                        : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {trust.metric_key.replaceAll("_", " ")} {trust.coverage_pct.toFixed(0)}%
+              </span>
+            ))}
+          </div>
         </div>
 
         <Button

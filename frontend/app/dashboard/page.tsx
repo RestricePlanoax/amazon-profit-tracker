@@ -81,6 +81,65 @@ const supportingMetrics: Array<{
   { key: "cpc", label: "CPC", type: "currency" as const },
 ];
 
+const trustPriorityMetricKeys: Array<keyof DashboardMetricSet> = [
+  "net_profit",
+  "profit_margin",
+  "revenue",
+  "ad_spend",
+  "acos",
+  "refund_rate",
+];
+
+const metricLabels: Record<keyof DashboardMetricSet, string> = {
+  revenue: "Revenue",
+  net_profit: "Net Profit",
+  profit_margin: "Profit Margin",
+  tacos: "TACOS",
+  acos: "ACOS",
+  refund_rate: "Refund Rate",
+  ad_spend: "Ad Spend",
+  roas: "ROAS",
+  avg_order_value: "AOV",
+  orders_count: "Orders",
+  units_sold: "Units Sold",
+  ctr: "CTR",
+  cpc: "CPC",
+  ad_sales: "Ad Sales",
+  fees: "Fees",
+  taxes: "Taxes",
+  reimbursements: "Reimbursements",
+  refunds: "Refunds",
+  cogs: "COGS",
+  profit_per_order: "Profit / Order",
+};
+
+function buildTrustWarnings(summary: DashboardSummary) {
+  return trustPriorityMetricKeys
+    .map((metricKey) => summary.metric_trust.find((item) => item.metric_key === metricKey))
+    .filter(
+      (
+        item,
+      ): item is NonNullable<typeof item> => item !== undefined && item.status !== "complete",
+    )
+    .slice(0, 4)
+    .map((item) => {
+      const severity =
+        item.status === "missing" ? "critical" : item.status === "limited" ? "warning" : "info";
+      return {
+        metricKey: item.metric_key,
+        label: metricLabels[item.metric_key],
+        severity,
+        headline:
+          item.status === "missing"
+            ? `${metricLabels[item.metric_key]} is not fully trustworthy yet`
+            : item.status === "limited"
+              ? `${metricLabels[item.metric_key]} is based on thin coverage`
+              : `${metricLabels[item.metric_key]} is only partially covered`,
+        body: item.note,
+      };
+    });
+}
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
@@ -161,6 +220,8 @@ export default function DashboardPage() {
     configuredHeadlineMetrics.length > 0 ? configuredHeadlineMetrics : headlineMetrics;
   const renderedSupportingMetrics =
     configuredSupportingMetrics.length > 0 ? configuredSupportingMetrics : supportingMetrics;
+  const metricTrustMap = new Map(summary?.metric_trust.map((item) => [item.metric_key, item]) ?? []);
+  const trustWarnings = summary ? buildTrustWarnings(summary) : [];
 
   const handleLoadDemoStore = async () => {
     setLoadingDemo(true);
@@ -264,36 +325,140 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <section className="grid gap-4 md:grid-cols-2">
-              {summary.data_sources.map((source) => (
-                <div
-                  key={source.name}
-                  className="polaris-card p-5"
-                >
+            {trustWarnings.length > 0 ? (
+              <section className="polaris-card p-5">
+                <div className="mb-4">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    {source.name}
+                    Trust flags
                   </p>
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className="font-display text-2xl font-semibold">
-                      {source.active ? "Active" : "Inactive"}
-                    </p>
-                    <span
-                      className={`polaris-badge ${
-                        source.active
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {source.active ? "Healthy" : "Waiting"}
-                    </span>
-                  </div>
+                  <h2 className="font-display text-2xl font-semibold">
+                    Important metrics with incomplete backing data
+                  </h2>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {source.last_refresh_at
-                      ? `Last activity ${new Date(source.last_refresh_at).toLocaleString()}`
-                      : "No refresh recorded yet"}
+                    These metrics still render, but they should be read with caution until the
+                    missing source data is uploaded for this date range.
                   </p>
                 </div>
-              ))}
+                <div className="grid gap-3 md:grid-cols-2">
+                  {trustWarnings.map((warning) => (
+                    <article
+                      key={warning.metricKey}
+                      className="rounded-lg border border-border bg-[var(--surface-subdued)] p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold">{warning.label}</p>
+                        <span
+                          className={`polaris-badge ${
+                            warning.severity === "critical"
+                              ? "bg-rose-100 text-rose-800"
+                              : warning.severity === "warning"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-sky-100 text-sky-800"
+                          }`}
+                        >
+                          {warning.severity === "critical"
+                            ? "Missing"
+                            : warning.severity === "warning"
+                              ? "Limited"
+                              : "Partial"}
+                        </span>
+                      </div>
+                      <p className="mt-3 font-display text-xl font-semibold">{warning.headline}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {warning.body}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="polaris-card p-5">
+                <div className="mb-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Range coverage
+                  </p>
+                  <h2 className="font-display text-2xl font-semibold">
+                    How complete this window is
+                  </h2>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {summary.range_coverage.map((coverage) => (
+                    <div
+                      key={coverage.key}
+                      className="rounded-lg border border-border bg-[var(--surface-subdued)] p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold">{coverage.label}</p>
+                        <span
+                          className={`polaris-badge ${
+                            coverage.status === "complete"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : coverage.status === "partial"
+                                ? "bg-amber-100 text-amber-800"
+                                : coverage.status === "limited"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {coverage.coverage_pct.toFixed(0)}%
+                        </span>
+                      </div>
+                      <p className="mt-3 font-display text-2xl font-semibold">
+                        {coverage.covered_days}/{coverage.expected_days} days
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        {coverage.latest_data_date
+                          ? `Latest raw data date ${coverage.latest_data_date}`
+                          : "No source rows in this selected window yet"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="polaris-card p-5">
+                <div className="mb-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Data freshness
+                  </p>
+                  <h2 className="font-display text-2xl font-semibold">
+                    Source health at a glance
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {summary.data_sources.map((source) => (
+                    <div
+                      key={source.key}
+                      className="rounded-lg border border-border bg-[var(--surface-subdued)] p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold">{source.name}</p>
+                        <span
+                          className={`polaris-badge ${
+                            source.active
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {source.active ? "Fresh" : "Waiting"}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {source.last_refresh_at
+                          ? `Last refresh ${new Date(source.last_refresh_at).toLocaleString()}`
+                          : "No completed import or sync yet"}
+                      </p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {source.active
+                          ? "Included in trust checks where relevant."
+                          : "This source is not contributing data yet."}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -307,6 +472,7 @@ export default function DashboardPage() {
                   lowerIsBetter={
                     "polarity" in item ? item.polarity === "lower_is_better" : item.lowerIsBetter
                   }
+                  trust={metricTrustMap.get(item.key)}
                 />
               ))}
             </div>
@@ -347,12 +513,22 @@ export default function DashboardPage() {
                     <p className="mt-2 text-xs text-muted-foreground">
                       Previous {summary.metrics[metric.key].previous.toFixed(2)}
                     </p>
+                    {metricTrustMap.get(metric.key) ? (
+                      <div className="mt-3 rounded-lg border border-border/70 bg-card px-3 py-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">
+                          Powered by {metricTrustMap.get(metric.key)?.powered_by.join(" + ")}
+                        </p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Coverage {metricTrustMap.get(metric.key)?.coverage_pct.toFixed(0)}%
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
             </section>
 
-            <ProfitChart data={trends} />
+            <ProfitChart data={trends} metricTrust={summary.metric_trust} />
             {insights ? <InsightsPanel data={insights} /> : null}
           </>
         )}

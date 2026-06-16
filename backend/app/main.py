@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.analytics import router as analytics_router
 from app.api.auth import router as auth_router
 from app.api.dashboard import router as dashboard_router
 from app.api.demo import router as demo_router
@@ -34,6 +35,7 @@ app.include_router(dashboard_router)
 app.include_router(demo_router)
 app.include_router(metrics_router)
 app.include_router(products_router)
+app.include_router(analytics_router)
 
 
 @app.get("/health", tags=["health"])

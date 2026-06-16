@@ -8,10 +8,13 @@ import { ProductsTable } from "@/components/ProductsTable";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import type { DateBounds, ProductProfitability } from "@/lib/types";
+import type { DashboardSummary, DateBounds, ProductProfitability } from "@/lib/types";
+
+const productTrustMetricKeys = ["net_profit", "profit_margin", "ad_spend", "acos", "refund_rate"] as const;
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductProfitability[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [bounds, setBounds] = useState<DateBounds | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -44,8 +47,12 @@ export default function ProductsPage() {
 
     try {
       setError(null);
-      const response = await api.getProducts(startDate, endDate);
-      setProducts(response);
+      const [productsResponse, summaryResponse] = await Promise.all([
+        api.getProducts(startDate, endDate),
+        api.getSummary(startDate, endDate),
+      ]);
+      setProducts(productsResponse);
+      setSummary(summaryResponse);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load products.");
     } finally {
@@ -88,6 +95,19 @@ export default function ProductsPage() {
       setUploadingCogs(false);
     }
   };
+
+  const trustWarnings =
+    summary?.metric_trust
+      .filter(
+        (item) =>
+          productTrustMetricKeys.includes(item.metric_key as (typeof productTrustMetricKeys)[number]) &&
+          item.status !== "complete",
+      )
+      .slice(0, 3) ?? [];
+  const tableTrustMetrics =
+    summary?.metric_trust.filter((item) =>
+      ["net_profit", "profit_margin", "ad_spend", "acos"].includes(item.metric_key),
+    ) ?? [];
 
   return (
     <AppShell title="Products">
@@ -146,6 +166,46 @@ export default function ProductsPage() {
           ) : null}
         </section>
 
+        {trustWarnings.length > 0 ? (
+          <section className="polaris-card p-5">
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                Product trust flags
+              </p>
+              <h2 className="font-display text-2xl font-semibold">
+                SKU rankings are using incomplete source coverage
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Profitability is still useful here, but some metrics are partial for the selected date range.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {trustWarnings.map((warning) => (
+                <article
+                  key={warning.metric_key}
+                  className="rounded-lg border border-border bg-[var(--surface-subdued)] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">{warning.metric_key.replaceAll("_", " ")}</p>
+                    <span
+                      className={`polaris-badge ${
+                        warning.status === "missing"
+                          ? "bg-rose-100 text-rose-800"
+                          : warning.status === "limited"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-sky-100 text-sky-800"
+                      }`}
+                    >
+                      {warning.status}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{warning.note}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {loading ? (
           <div className="h-96 animate-pulse rounded-lg border border-border bg-card" />
         ) : error ? (
@@ -156,7 +216,7 @@ export default function ProductsPage() {
             description="Once you upload order or ad reports, SKU profitability will appear here."
           />
         ) : (
-          <ProductsTable products={products} onRefresh={loadProducts} />
+          <ProductsTable products={products} onRefresh={loadProducts} trustMetrics={tableTrustMetrics} />
         )}
       </div>
     </AppShell>

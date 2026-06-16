@@ -82,3 +82,45 @@ class Store(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    product_variants = relationship(
+        "ProductVariant",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    return_events = relationship(
+        "ReturnAnalytics",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    reimbursements = relationship(
+        "Reimbursement",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    inventory_aging_rows = relationship(
+        "InventoryAging",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    ad_campaign_metrics = relationship(
+        "AdCampaignMetric",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    profit_alerts = relationship(
+        "ProfitAlert",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    seller_insights = relationship(
+        "SellerInsight",
+        back_populates="store",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

@@ -10,12 +10,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { TrendPoint } from "@/lib/types";
+import type { DashboardMetricSet, MetricTrust, TrendPoint } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateLabel, formatMetricValue } from "@/lib/utils";
 
 type ProfitChartProps = {
   data: TrendPoint[];
+  metricTrust?: MetricTrust[];
 };
 
 const chartModes = {
@@ -41,9 +42,12 @@ const chartModes = {
 
 type ChartModeKey = keyof typeof chartModes;
 
-export function ProfitChart({ data }: ProfitChartProps) {
+export function ProfitChart({ data, metricTrust = [] }: ProfitChartProps) {
   const [mode, setMode] = useState<ChartModeKey>("financials");
   const activeMode = chartModes[mode];
+  const trustMap = new Map<keyof DashboardMetricSet, MetricTrust>(
+    metricTrust.map((item) => [item.metric_key, item]),
+  );
 
   return (
     <section className="polaris-card p-4">
@@ -55,6 +59,30 @@ export function ProfitChart({ data }: ProfitChartProps) {
           <h2 className="text-lg font-semibold">
             Daily performance across revenue, profit, and efficiency
           </h2>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {activeMode.lines.map((line) => {
+              const trust = trustMap.get(line.key as keyof DashboardMetricSet);
+              if (!trust) {
+                return null;
+              }
+              return (
+                <span
+                  key={line.key}
+                  className={`polaris-badge ${
+                    trust.status === "complete"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : trust.status === "partial"
+                        ? "bg-amber-100 text-amber-800"
+                        : trust.status === "limited"
+                          ? "bg-orange-100 text-orange-800"
+                          : "bg-slate-100 text-slate-700"
+                  }`}
+                >
+                  {line.label} {trust.coverage_pct.toFixed(0)}%
+                </span>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">

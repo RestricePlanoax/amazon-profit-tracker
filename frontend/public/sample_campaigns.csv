@@ -1,0 +1,4 @@
+metric_date,campaign_id,campaign_name,sku,spend,sales,clicks,orders,acos,roas,conversion_rate
+2026-04-01,CAMP-001,Hydration Push,SKU-001,800,2200,48,6,36.36,2.75,12.5
+2026-04-01,CAMP-002,Desk Essentials,SKU-002,650,900,52,3,72.22,1.38,5.77
+2026-04-02,CAMP-001,Hydration Push,SKU-001,780,2100,44,5,37.14,2.69,11.36

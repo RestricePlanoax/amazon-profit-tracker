@@ -15,7 +15,10 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.settlement import Settlement
 from app.models.sync_job import SyncJob
+from app.services.analysis_runner import StoreAnalysisRunner
 from app.services.metrics_service import recompute_daily_metrics
+
+analysis_runner = StoreAnalysisRunner()
 
 
 SYNC_PRODUCT_BLUEPRINTS = [
@@ -216,6 +219,7 @@ def run_integration_sync(integration_id: uuid.UUID, job_id: uuid.UUID) -> None:
         time.sleep(0.25)
 
         recompute_daily_metrics(db, integration.store_id)
+        analysis_runner.run(db, integration.store_id)
         timestamp = utcnow()
         job.status = "success"
         job.completed_at = timestamp

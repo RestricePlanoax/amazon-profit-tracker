@@ -1,0 +1,4 @@
+detected_at,sku,issue_type,amount,status,claim_deadline,claimed,received
+2026-04-04,SKU-001,lost_inventory,1450,pending,2026-04-30,false,false
+2026-04-08,SKU-002,warehouse_damage,975,claimed,2026-05-05,true,false
+2026-04-12,SKU-001,customer_refund_without_return,620,received,2026-05-10,true,true

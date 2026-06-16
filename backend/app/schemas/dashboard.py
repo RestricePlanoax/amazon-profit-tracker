@@ -33,9 +33,30 @@ class DashboardMetricSet(BaseModel):
 
 
 class DataSourceStatus(BaseModel):
+    key: str
     name: str
     active: bool
+    status: str
     last_refresh_at: str | None
+
+
+class RangeCoverageStatus(BaseModel):
+    key: str
+    label: str
+    covered_days: int
+    expected_days: int
+    coverage_pct: float
+    status: str
+    latest_data_date: str | None
+
+
+class MetricTrust(BaseModel):
+    metric_key: str
+    powered_by: list[str]
+    coverage_pct: float
+    freshness_at: str | None
+    status: str
+    note: str
 
 
 class DashboardSummary(BaseModel):
@@ -46,6 +67,8 @@ class DashboardSummary(BaseModel):
     metrics: DashboardMetricSet
     last_data_refresh: str | None = None
     data_sources: list[DataSourceStatus] = []
+    range_coverage: list[RangeCoverageStatus] = []
+    metric_trust: list[MetricTrust] = []
 
 
 class DateBounds(BaseModel):

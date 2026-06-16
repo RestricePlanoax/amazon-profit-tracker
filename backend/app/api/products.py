@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.security import get_current_store
 from app.models.product import Product
 from app.models.store import Store
+from app.services.analysis_runner import StoreAnalysisRunner
 from app.services.csv_parser import normalize_column_name
 from app.schemas.product import (
     BulkCogsResult,
@@ -24,6 +25,7 @@ from app.services.metrics_service import get_product_profitability, recompute_da
 
 
 router = APIRouter(prefix="/products", tags=["products"])
+analysis_runner = StoreAnalysisRunner()
 
 
 def _canonical_header(name: str) -> str:
@@ -70,6 +72,7 @@ def update_product_cogs(
 
     product.cogs = Decimal(str(payload.cogs))
     recompute_daily_metrics(db, current_store.id)
+    analysis_runner.run(db, current_store.id)
     db.commit()
     db.refresh(product)
     return ProductRead.model_validate(product)
@@ -143,6 +146,7 @@ async def bulk_upload_cogs(
             products_updated += 1
 
     recompute_daily_metrics(db, current_store.id)
+    analysis_runner.run(db, current_store.id)
     db.commit()
 
     return BulkCogsResult(
