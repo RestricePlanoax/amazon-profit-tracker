@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import quote_plus
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -31,6 +32,11 @@ def _normalize_database_url(value: str) -> str:
 class Settings(BaseSettings):
     app_name: str = "Amazon Seller Profit Tracker API"
     database_url: str | None = None
+    postgres_host: str | None = None
+    postgres_port: int | None = None
+    postgres_user: str | None = None
+    postgres_password: str | None = None
+    postgres_database: str | None = None
     postgres_url_non_pooling: str | None = None
     postgres_url: str | None = None
     postgres_prisma_url: str | None = None
@@ -51,8 +57,25 @@ class Settings(BaseSettings):
 
     @cached_property
     def resolved_database_url(self) -> str:
+        constructed_postgres_url = None
+        if all(
+            [
+                self.postgres_host,
+                self.postgres_user,
+                self.postgres_password,
+                self.postgres_database,
+            ]
+        ):
+            encoded_password = quote_plus(self.postgres_password)
+            port = self.postgres_port or 5432
+            constructed_postgres_url = (
+                f"postgresql+psycopg://{self.postgres_user}:{encoded_password}"
+                f"@{self.postgres_host}:{port}/{self.postgres_database}?sslmode=require"
+            )
+
         candidates = [
             self.database_url,
+            constructed_postgres_url,
             self.postgres_url_non_pooling,
             self.postgres_url,
             self.postgres_prisma_url,
